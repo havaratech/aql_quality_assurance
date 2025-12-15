@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-15 16:24:29.125478",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "aql_inspection_level",
+  "aql_classification",
+  "aql_critical_scale",
+  "aql_major_scale",
+  "aql_minor_scale"
+ ],
+ "fields": [
+  {
+   "fieldname": "aql_classification",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "AQL Classification",
+   "options": "Select\nCritical\nMajor\nMinor",
+   "reqd": 1
+  },
+  {
+   "fieldname": "aql_inspection_level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "AQL Inspection Level",
+   "options": "Select\nGen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III",
+   "reqd": 1
+  },
+  {
+   "fieldname": "aql_critical_scale",
+   "fieldtype": "Select",
+   "label": "AQL Critical Scale",
+   "options": "Select\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
+   "reqd": 1
+  },
+  {
+   "fieldname": "aql_major_scale",
+   "fieldtype": "Select",
+   "label": "AQL Major Scale",
+   "options": "Select\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
+   "reqd": 1
+  },
+  {
+   "fieldname": "aql_minor_scale",
+   "fieldtype": "Select",
+   "label": "AQL Minor Scale",
+   "options": "Select\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-12-15 18:29:22.503636",
+ "modified_by": "Administrator",
+ "module": "AQL Quality Assurance By HavaraTech",
+ "name": "AQL Classification",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
