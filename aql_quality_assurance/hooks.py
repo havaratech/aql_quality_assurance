@@ -155,6 +155,15 @@ fixtures = [
 # 	}
 # }
 
+doc_events = {
+    "Supplier": {
+        "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.supplier.supplier.set_aql_defaults_from_config"
+    },
+    "Item": {
+        "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.item.item.set_aql_defaults_from_config"
+    }
+}
+
 # Scheduled Tasks
 # ---------------
 
