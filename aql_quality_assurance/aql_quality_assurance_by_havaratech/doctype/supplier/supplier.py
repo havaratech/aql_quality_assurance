@@ -28,7 +28,7 @@ def set_aql_defaults_from_config(doc, method):
     # CASE 2: Override DISABLED
     # -------------------------------
     config = frappe.get_single(
-        "AQL Classification Quality Inspection"
+        "AQL Classification Quality Inspection Setting"
     )
 
     #Validate CONFIG, not Supplier
@@ -40,7 +40,7 @@ def set_aql_defaults_from_config(doc, method):
         or config.aql_minor_scale == "Select"
     ):
         frappe.throw(
-            "Please configure valid AQL values in AQL Classification Quality Inspection."
+            "Please configure valid AQL values in AQL Classification Quality Inspection Setting."
         )
 
     #Force values from config

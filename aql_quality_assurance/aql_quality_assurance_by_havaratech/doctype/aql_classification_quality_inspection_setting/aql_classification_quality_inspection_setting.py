@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class AQLClassificationQualityInspection(Document):
+class AQLClassificationQualityInspectionSetting(Document):
 	pass
