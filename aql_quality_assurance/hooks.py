@@ -161,6 +161,9 @@ doc_events = {
     },
     "Item": {
         "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.item.item.set_aql_defaults_from_config"
+    },
+    "Purchase Receipt": {
+        "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.copy_aql_from_supplier"
     }
 }
 
