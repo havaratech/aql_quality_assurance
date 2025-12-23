@@ -164,6 +164,18 @@ doc_events = {
     },
     "Purchase Receipt": {
         "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.copy_aql_from_supplier"
+    },
+    "Purchase Invoice": {
+        "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_invoice.purchase_invoice.copy_aql_from_supplier"
+    },
+    "Customer": {
+        "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.customer.customer.set_aql_defaults_from_config"
+    },
+    "Sales Invoice": {
+        "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.sales_invoice.sales_invoice.copy_aql_from_customer"
+    },
+    "Delivery Note": {  
+        "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.delivery_note.delivery_note.copy_aql_from_customer"
     }
 }
 
