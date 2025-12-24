@@ -1,5 +1,6 @@
 frappe.ui.form.on('Quality Inspection', {
     // 1. When the form opens
+    refresh: fetch_aql_data,
     onload: function(frm) {
         if (frm.doc.reference_name && !frm.doc.custom_aql_party_name) {
             fetch_aql_data(frm);
@@ -30,15 +31,17 @@ function fetch_aql_data(frm) {
                 doc: frm.doc
             },
             callback: function(r) {
+                // Check if we received data
+                console.log("Received data from server:", r.message);
                 if (r.message) {
                     // Update the UI fields without saving yet
-                    frm.set_value('custom_aql_party_name', r.message.custom_aql_party_name);
-                    frm.set_value('custom_aql_party_type', r.message.custom_aql_party_type);
-                    frm.set_value('custom_aql_lot_size', r.message.custom_aql_lot_size);
-                    frm.set_value('custom_aql_inspection_level', r.message.custom_aql_inspection_level);
-                    frm.set_value('custom_aql_critical_scale', r.message.custom_aql_critical_scale);
-                    frm.set_value('custom_aql_major_scale', r.message.custom_aql_major_scale);
-                    frm.set_value('custom_aql_minor_scale', r.message.custom_aql_minor_scale);
+                    frm.set_value('custom_aql_party_name', r.message.custom_aql_party_name, null, true);
+                    frm.set_value('custom_aql_party_type', r.message.custom_aql_party_type, null, true);
+                    frm.set_value('custom_aql_lot_size', r.message.custom_aql_lot_size, null, true);
+                    frm.set_value('custom_aql_inspection_level', r.message.custom_aql_inspection_level, null, true);
+                    frm.set_value('custom_aql_critical_scale', r.message.custom_aql_critical_scale, null, true);
+                    frm.set_value('custom_aql_major_scale', r.message.custom_aql_major_scale, null, true);
+                    frm.set_value('custom_aql_minor_scale', r.message.custom_aql_minor_scale, null, true);
 
                     // Refresh the fields to show updated values
                     frm.refresh_field('custom_aql_party_name');
@@ -48,6 +51,8 @@ function fetch_aql_data(frm) {
                     frm.refresh_field('custom_aql_critical_scale');
                     frm.refresh_field('custom_aql_major_scale');
                     frm.refresh_field('custom_aql_minor_scale');
+                    
+                    console.log("All fields updated successfully.");
                 }
             }
         });
