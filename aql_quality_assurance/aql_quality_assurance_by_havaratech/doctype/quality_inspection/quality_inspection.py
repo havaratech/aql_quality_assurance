@@ -13,3 +13,13 @@ def set_aql_parameters(doc, method):
         return
 
     #2. Fetch the reference document from (Purchase Receipt, )    
+    try:
+        ref_doc = frappe.get_cached_doc(doc.reference_type, doc.reference_name)
+    except frappe.DoesNotExistError:
+        return
+
+    party_name = None
+    party_type = None
+    lot_size = 0
+    
+            
