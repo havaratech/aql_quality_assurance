@@ -3,15 +3,13 @@ from frappe.utils import flt
 import json
 
 @frappe.whitelist()
-def set_aql_parameters(doc):
+def set_aql_parameters(doc, method=None):
     # if called from JS, 'doc' is a JSON string. must convert it to a doc object
     if isinstance(doc, str):
         doc = frappe.get_doc(json.loads(doc))
 
-    # --- TRACE 1: Check if hook is working ---
-    # If you see this message when saving, the hook is connected.
-    # If you DON'T see it, the problem is in your hooks.py path.
-    frappe.msgprint("DEBUG: set_aql_parameters started")
+    # --- TRACE 1: Check if hook is working ---# If you see this message when saving, the hook is connected.# If you DON'T see it, the problem is in your hooks.py path.
+    #frappe.msgprint("DEBUG: set_aql_parameters started")
 
     if not doc.reference_type or not doc.reference_name:
         frappe.msgprint("DEBUG: Missing Reference Type or Name")
@@ -20,9 +18,9 @@ def set_aql_parameters(doc):
     # --- TRACE 2: Verify Reference Doc Loading ---
     try:
         ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
-        frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
+    #    frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
     except Exception as e:
-        frappe.msgprint(f"DEBUG: Error loading reference: {e}")
+    #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")
         return doc.as_dict()
 
     # --- TRACE 3: Process Supplier Documents ---
@@ -40,9 +38,9 @@ def set_aql_parameters(doc):
             doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
             doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
             doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
-            frappe.msgprint(f"DEBUG: Found Supplier {s_master.supplier_name}")
-        else:
-            frappe.msgprint("DEBUG: No Supplier ID found in reference doc")
+    #        frappe.msgprint(f"DEBUG: Found Supplier {s_master.supplier_name}")
+    #    else:
+    #        frappe.msgprint("DEBUG: No Supplier ID found in reference doc")
 
     # --- TRACE 4: Process Customer Documents ---
     elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:
@@ -55,7 +53,7 @@ def set_aql_parameters(doc):
             doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
             doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
             doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
-            frappe.msgprint(f"DEBUG: Found Customer {c_master.customer_name}")
+    #        frappe.msgprint(f"DEBUG: Found Customer {c_master.customer_name}")
 
     # Lot size logic
     if doc.item_code:

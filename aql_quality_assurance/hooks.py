@@ -55,10 +55,8 @@ fixtures = [
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_js = {
-    
-    "Quality Inspection": "aql_quality_assurance/aql_quality_assurance_by_havaratech/doctype/quality_inspection/quality_inspection.js"
-    
-    }   
+    "Quality Inspection": "public/js/quality_inspection.js"
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -183,7 +181,7 @@ doc_events = {
         "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.delivery_note.delivery_note.copy_aql_from_customer"
     },
     "Quality Inspection": {
-        "before_validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.set_aql_parameters"
+        "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.set_aql_parameters"
     }
 }
 
