@@ -181,7 +181,10 @@ doc_events = {
         "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.delivery_note.delivery_note.copy_aql_from_customer"
     },
     "Quality Inspection": {
-        "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.set_aql_parameters"
+        "validate": [
+            "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.set_aql_parameters",
+            "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.calculate_aql_server"
+        ]
     }
 }
 
