@@ -2,20 +2,16 @@ import frappe
 from frappe.utils import flt
 import json
 from frappe.model.document import Document
+from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection
 
 @frappe.whitelist()
 def set_aql_parameters(doc, method=None):
     # if called from JS, 'doc' is a JSON string. must convert it to a doc object
     if isinstance(doc, str):
         doc = frappe.get_doc(json.loads(doc))
-
-    # --- TRACE 1: Check if hook is working ---# If you see this message when saving, the hook is connected.# If you DON'T see it, the problem is in your hooks.py path.
-    #frappe.msgprint("DEBUG: set_aql_parameters started")
-
     if not doc.reference_type or not doc.reference_name:
         frappe.msgprint("DEBUG: Missing Reference Type or Name")
         return doc.as_dict()    
-
     # --- TRACE 2: Verify Reference Doc Loading ---
     try:
         ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
@@ -23,7 +19,6 @@ def set_aql_parameters(doc, method=None):
     except Exception as e:
     #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")
         return doc.as_dict()
-
     # --- TRACE 3: Process Supplier Documents ---
     if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:
         # Get the ID from the PR
@@ -31,7 +26,6 @@ def set_aql_parameters(doc, method=None):
         if s_id:
             # Fetch the actual Supplier master record
             s_master = frappe.get_doc("Supplier", s_id)
-            
             # Map values
             doc.custom_aql_party_name = s_master.supplier_name
             doc.custom_aql_party_type = s_master.supplier_type
@@ -39,11 +33,7 @@ def set_aql_parameters(doc, method=None):
             doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
             doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
             doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
-    #        frappe.msgprint(f"DEBUG: Found Supplier {s_master.supplier_name}")
-    #    else:
-    #        frappe.msgprint("DEBUG: No Supplier ID found in reference doc")
-
-    # --- TRACE 4: Process Customer Documents ---
+# --- TRACE 4: Process Customer Documents ---
     elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:
         c_id = ref_doc.get("customer")
         if c_id:
@@ -54,7 +44,6 @@ def set_aql_parameters(doc, method=None):
             doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
             doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
             doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
-    #frappe.msgprint(f"DEBUG: Found Customer {c_master.customer_name}")
 
     # Lot size logic
     if doc.item_code:
@@ -68,8 +57,37 @@ class QualityInspection(Document):
     def validate(self):
         set_aql_parameters(self)
         """Ensure AQL is calculated on save/submit"""
-        self.calculate_aql_server()
 
+        if self.readings and not frappe.flags.in_patch:
+            for row in self.readings:
+                # if this row already exists in DB
+                if row.name and not row.is_new():
+                    # Prevent changing AQL-defining fields
+                    if row.has_value_changed([
+                        "specification",
+                        "parameter_group",
+                        "custom_aql_classification",
+                        "custom_aql_item_sample_no"
+                    # ,
+                    #     "numeric",
+                    #     "min_value",
+                    #     "max_value",
+                    #    # "manual_inspection",
+                    #     "formula_based_criteria"
+                    ]):
+                        frappe.throw("AQL parameters cannot be modified manually." "Change Template or Sample size to regenerate."
+                       )
+        # Generate / Heal AQL Readings
+        self._handle_aql_regeneration()
+       
+        # Copy classification from template to readings
+        self.copy_aql_classification()
+        # Calculate AQL results(counts, status)
+        self.calculate_aql_server()
+        # Lock readings for non-admin users
+        self._lock_readings_for_non_admin()
+        self.on_trash()
+        
     def calculate_aql_server(self):
         """
         Server-side AQL calculation: sample_size, critical, major, minor
@@ -101,9 +119,191 @@ class QualityInspection(Document):
         
         frappe.msgprint("Server-side AQL calculated successfully")
 
+    def copy_aql_classification(self):
+        """
+        Copy custom_aql_classification from
+        Quality Inspection Template -> Quality Inspection Readings
+        (works for NEW / UNSAVED documents)
+        """
+        if not self.quality_inspection_template:
+            return
+
+        # Load template
+        template = frappe.get_doc(
+            "Quality Inspection Template",
+            self.quality_inspection_template
+        )
+
+        # ✅ CORRECT child table
+        template_rows = template.item_quality_inspection_parameter
+
+        if not template_rows:
+            frappe.throw("No Quality Inspection Parameters found in template")
+
+        # Build map: specification → classification
+        template_map = {
+            p.specification: p.custom_aql_classification
+            for p in template_rows
+        }
+
+        # Apply to readings
+        for r in self.readings:
+            if r.specification in template_map:
+                r.custom_aql_classification = template_map[r.specification]
+
+    def _handle_aql_regeneration(self):
+        """ Regenerate AQL readings ONLY when structure changes. Safe for new + existing documents.  """
+
+        # -------- CASE 1: NEW DOCUMENT --------
+        if not self.readings:
+            self._generate_aql_readings()
+            return
+
+        # -------- CASE 2: EXISTING DOCUMENT --------
+        old = self.get_doc_before_save()
+
+        if not old:
+            self.readings = []
+            self._generate_aql_readings()   
+            return
+
+        structure_changed = (
+            old.quality_inspection_template != self.quality_inspection_template
+            or old.sample_size != self.sample_size
+            or old.custom_aql_inspection_level != self.custom_aql_inspection_level
+        )
+
+        if not structure_changed:
+            return
+
+        # -------- PERMISSION CHECK --------
+        if structure_changed:
+            if not frappe.has_role(frappe.session.user, "System Manager", "Administrator"):
+                frappe.throw(
+                    "Only System Manager / Administrator can regenerate AQL readings after structural changes."
+            )
+
+        # -------- REGENERATE --------
+            self.readings = []
+        self._generate_aql_readings()
+
+
+  
+    def _generate_aql_readings(self):
+        """  Create readings as: Sample Size x Parameters (each with its own classification)   """
+        if not self.quality_inspection_template:
+            return
+
+        if not self.sample_size or int(self.sample_size) <= 0:
+            return
+
+        template = frappe.get_doc(
+            "Quality Inspection Template",
+            self.quality_inspection_template
+        )
+
+        parameters = template.item_quality_inspection_parameter
+        if not parameters:
+            frappe.throw("No Quality Inspection Parameters found in template")
+            
+
+        ref = self.reference_name or "REF"
+        item = self.item_code or "ITEM"
+        total_sample_size = int(self.sample_size)
+
+        # Index existing rows by (sample_no, param_key)
+        existing_map = {
+            (r.custom_aql_item_sample_no, r.specification, r.parameter_group, r.custom_aql_classification): r
+            for r in self.readings
+        }        
+
+        for sample_no in range(1, total_sample_size + 1):
+            sample_id = f"{ref}-{item}-S{sample_no}"
+
+            for p in parameters:
+                key = (
+                    p.specification,
+                    p.parameter_group,
+                    p.custom_aql_classification
+                )
+
+                map_key = (sample_id, *key)
+
+                if map_key in existing_map:
+                    continue  # already exists
+
+                # Create new row
+                row = self.append("readings", {})
+                row.specification = p.specification
+                row.parameter_group = p.parameter_group
+                row.custom_aql_classification = p.custom_aql_classification
+                row.custom_aql_item_sample_no = sample_id
+                row.numeric = p.numeric
+                row.min_value = p.min_value
+                row.max_value = p.max_value
+                # row.manual_inspection = p.manual_inspection
+                row.formula_based_criteria = p.formula_based_criteria
+                row.status = "Pending"
+        
+
+    def _lock_readings_for_non_admin(self):
+        """ Lock readings table for non-admin users """
+        if not frappe.has_role(frappe.session.user, "System Manager", "Administrator"):
+            return
+
+        if not self.is_new():
+            old = self.get_doc_before_save()
+            if not old:
+                return
+            
+            if len(self.readings) != len(old.readings):
+                frappe.throw("Only Administrator or System Manager can modify Quality Inspection Readings.")
+
+            for i, row in enumerate(self.readings):
+                old_row = old.readings[i]
+
+                # Allow only status and remarks to be changed
+                protected_fields = [
+                    "specification",
+                    "parameter_group",
+                    "custom_aql_classification",
+                    "custom_aql_item_sample_no",
+                    "numeric",
+                    "min_value",
+                    "max_value",
+                   # "manual_inspection",
+                    "formula_based_criteria"
+                ]
+                for field in protected_fields:
+                    if row.get(field) != old_row.get(field):
+                        frappe.throw("Only Administrator or System Manager can modify Quality Inspection Readings.")
+
+    def on_trash(self):
+        if not frappe.has_role(frappe.session.user, "System Manager", "Administrator"):
+            frappe.throw("Only Administrator or System Manager can delete Quality Inspections.")     
+
+    def _needs_aql_regeneration(self):
+        """Decide if AQL readings must be regenerated     """
+        if self.is_new():
+            return True
+
+        if self.has_value_changed("sample_size"):
+            return True
+
+        if self.has_value_changed("quality_inspection_template"):
+            return True
+
+        if self.has_value_changed("custom_aql_inspection_level"):
+            return True
+
+        return False
+                           
+                
+# -------------------------            
+
 # 🔥 WHITELISTED WRAPPER (THIS IS WHAT JS CALLS)
 @frappe.whitelist()
-def calculate_aql_server(name):
+def run_calculate_aql_server(name):
     """
     Button-triggered AQL calculation
     """
@@ -287,11 +487,59 @@ def refresh_aql_logic(doc):
     if not isinstance(doc, QualityInspection):
         doc.__class__ = QualityInspection
     
-    # 1️⃣ Refresh AQL parameters from supplier/customer
+    # Refresh AQL parameters from supplier/customer
     set_aql_parameters(doc)
-    # 2️⃣ Calculate sample size & accept/reject limits
+    # Calculate sample size & accept/reject limits
     doc.calculate_aql_server()
-    # 3️⃣ Return updated doc (do not save automatically)
+    # Get classification copied
+    doc.copy_aql_classification()
+    # readings calc
+    doc._handle_aql_regeneration()     
+    # Return updated doc (do not save automatically)
+    # doc._generate_aql_readings()
     return doc.as_dict()
+
     
-   
+@frappe.whitelist()
+def run_copy_aql_classification(doc):
+    """
+    Copy custom_aql_classification from
+    Quality Inspection Template -> Quality Inspection Readings
+    (works for NEW / UNSAVED documents)
+    """
+    import json
+
+    # Handle JS-passed doc
+    if isinstance(doc, str):
+        doc = frappe.get_doc(json.loads(doc))
+
+    if not doc.quality_inspection_template:
+        return doc.as_dict()
+
+    # Load template
+    template = frappe.get_doc(
+        "Quality Inspection Template",
+        doc.quality_inspection_template
+    )
+
+    # ✅ CORRECT child table
+    template_rows = template.item_quality_inspection_parameter
+
+    if not template_rows:
+        frappe.throw("No Quality Inspection Parameters found in template")
+
+    # Build map: specification → classification
+    template_map = {
+        p.specification: p.custom_aql_classification
+        for p in template_rows
+    }
+
+    # Apply to readings
+    for r in doc.readings:
+        if r.specification in template_map:
+            r.custom_aql_classification = template_map[r.specification]
+
+    return doc.as_dict()
+
+
+

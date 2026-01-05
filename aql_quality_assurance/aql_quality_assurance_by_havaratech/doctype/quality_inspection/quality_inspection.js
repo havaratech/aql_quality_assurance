@@ -353,3 +353,32 @@ frappe.ui.form.on('Quality Inspection', {
             }
     }
 });
+
+frappe.ui.form.on('Quality Inspection', {
+    refresh(frm) {
+        console.log("AQL Load Classification script refresh fired");
+            if (frm.is_new()) {
+                frm.add_custom_button(__('5 - Load AQL Classification to Readings'), () => {
+                    frappe.call({
+                        method: "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.copy_aql_classification",
+                        args: { doc: frm.doc },
+                        callback: function(r) {
+                            if(r.message){
+                                frm.set_value(r.message);
+                                frm.refresh_fields();
+                                frappe.show_alert({ message: __('AQL Classification Copied to Readings'), indicator: 'green' });
+                            }
+                        }
+                    });
+                },      
+            __('Actions')
+                );
+            }
+    }
+}); 
+
+frappe.ui.form.on('Quality Inspection', {
+    refresh(frm) {
+        frm.set_df_property('item_serial_no', 'hidden', 1);
+    }
+});
