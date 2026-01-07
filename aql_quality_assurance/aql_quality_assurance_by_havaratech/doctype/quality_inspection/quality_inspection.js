@@ -11,12 +11,6 @@ frappe.ui.form.on('Quality Inspection', {
             () => refresh_aql_values(frm),
             __('Actions')
         );
-
-        // frm.add_custom_button(
-        //     __('Calculate AQL'),
-        //     () => calculate_aql_for_quality_inspection(frm),
-        //     __('Actions')
-        // );
     }
 });
 
@@ -353,32 +347,86 @@ frappe.ui.form.on('Quality Inspection', {
             }
     }
 });
+//***************************************************************//
+// Keep reading_1 and reading_value read-only based on numeric flag
+//***************************************************************//
 
 frappe.ui.form.on('Quality Inspection', {
     refresh(frm) {
-        console.log("AQL Load Classification script refresh fired");
-            if (frm.is_new()) {
-                frm.add_custom_button(__('5 - Load AQL Classification to Readings'), () => {
-                    frappe.call({
-                        method: "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.copy_aql_classification",
-                        args: { doc: frm.doc },
-                        callback: function(r) {
-                            if(r.message){
-                                frm.set_value(r.message);
-                                frm.refresh_fields();
-                                frappe.show_alert({ message: __('AQL Classification Copied to Readings'), indicator: 'green' });
-                            }
-                        }
-                    });
-                },      
-            __('Actions')
-                );
-            }
-    }
-}); 
-
-frappe.ui.form.on('Quality Inspection', {
-    refresh(frm) {
-        frm.set_df_property('item_serial_no', 'hidden', 1);
+        // Apply once after grid renders
+        console.log("Readonly logic applied on refresh");
+            apply_all_aql_rules(frm);
+            frm.fields_dict.readings.grid.refresh();
     }
 });
+
+frappe.ui.form.on('Quality Inspection Reading', {
+    form_render(frm, cdt, cdn) {
+        console.log("Readonly logic applied on form render");
+        const row = locals[cdt][cdn];
+        apply_row_rule(frm, row);
+    },
+
+    numeric(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        apply_row_rule(frm, row);
+    }
+});
+
+/* ------------------------------------------------ */
+
+function apply_all_aql_rules(frm) {
+    if (!frm.doc.readings) return;
+    frm.doc.readings.forEach(row => {
+        apply_row_rule(frm, row);
+    });
+}
+
+function apply_row_rule(frm, row) {
+    const grid = frm.fields_dict.readings.grid;
+    const grid_row = grid.grid_rows_by_docname[row.name];
+    if (!grid_row) return;
+
+    const is_numeric = cint(row.numeric);
+
+    const $reading_1 = grid_row.row.find('[data-fieldname="reading_1"] input');
+    const $reading_value = grid_row.row.find('[data-fieldname="reading_value"] input');
+
+    if (is_numeric) {
+        enable($reading_1);
+        disable($reading_value);
+    } else {
+        disable($reading_1);
+        enable($reading_value);
+    }
+}
+
+/* ------------------------------------------------ */
+
+function disable($el) {
+    $el.prop('readonly', true)
+       .addClass('aql-readonly');
+}
+
+function enable($el) {
+    $el.prop('readonly', false)
+       .removeClass('aql-readonly');
+}
+
+/* ------------------------------------------------ */
+/* Grey background for readonly */
+
+(() => {
+    if (document.getElementById('aql-style')) return;
+
+    const style = document.createElement('style');
+    style.id = 'aql-style';
+    style.innerHTML = `
+        .aql-readonly {
+            background-color: #f3f3f3 !important;
+            color: #666 !important;
+            cursor: not-allowed;
+        }
+    `;
+    document.head.appendChild(style);
+})();

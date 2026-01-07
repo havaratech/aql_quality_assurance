@@ -2,29 +2,24 @@ import frappe
 from frappe.utils import flt
 import json
 from frappe.model.document import Document
-from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection
+from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection, cint
+
+_orginal = QualityInspection.set_status_based_on_acceptance_values
 
 @frappe.whitelist()
 def set_aql_parameters(doc, method=None):
-    # if called from JS, 'doc' is a JSON string. must convert it to a doc object
-    if isinstance(doc, str):
+    if isinstance(doc, str):                                               # if called from JS, 'doc' is a JSON string. must convert it to a doc object     
         doc = frappe.get_doc(json.loads(doc))
     if not doc.reference_type or not doc.reference_name:
         frappe.msgprint("DEBUG: Missing Reference Type or Name")
         return doc.as_dict()    
-    # --- TRACE 2: Verify Reference Doc Loading ---
-    try:
+    try:                                                                    # --- TRACE 2: Load Reference Document ---  
         ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
-    #    frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
-    except Exception as e:
-    #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")
-        return doc.as_dict()
-    # --- TRACE 3: Process Supplier Documents ---
-    if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:
-        # Get the ID from the PR
-        s_id = ref_doc.get("supplier")
-        if s_id:
-            # Fetch the actual Supplier master record
+    except Exception as e:                                                  #    frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
+        return doc.as_dict()                                                #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")
+    if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  # --- TRACE 3: Process Supplier Documents ---
+        s_id = ref_doc.get("supplier")                                      # Get the ID from the PR    
+        if s_id:                                                            # Fetch the actual Supplier master record
             s_master = frappe.get_doc("Supplier", s_id)
             # Map values
             doc.custom_aql_party_name = s_master.supplier_name
@@ -33,8 +28,7 @@ def set_aql_parameters(doc, method=None):
             doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
             doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
             doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
-# --- TRACE 4: Process Customer Documents ---
-    elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:
+    elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:          # --- TRACE 4: Process Customer Documents ---    
         c_id = ref_doc.get("customer")
         if c_id:
             c_master = frappe.get_doc("Customer", c_id)
@@ -52,7 +46,6 @@ def set_aql_parameters(doc, method=None):
 
     return doc.as_dict()
 
-
 class QualityInspection(Document):
     def validate(self):
         set_aql_parameters(self)
@@ -68,18 +61,22 @@ class QualityInspection(Document):
                         "parameter_group",
                         "custom_aql_classification",
                         "custom_aql_item_sample_no"
-                    # ,
-                    #     "numeric",
-                    #     "min_value",
-                    #     "max_value",
-                    #    # "manual_inspection",
-                    #     "formula_based_criteria"
                     ]):
                         frappe.throw("AQL parameters cannot be modified manually." "Change Template or Sample size to regenerate."
                        )
+                # make reading_1 and reading_value read-only based on numeric flag
+                    if row.numeric:
+                        row.reading_1_read_only = True
+                        row.reading_value_read_only = False
+                    else:
+                        row.reading_1_read_only = False
+                        row.reading_value_read_only = True 
+        # apply optional parameter logic
+        
+        # Override parent status for AQL results
+        self._override_parent_status_for_aql()
         # Generate / Heal AQL Readings
-        self._handle_aql_regeneration()
-       
+        self._handle_aql_regeneration()    
         # Copy classification from template to readings
         self.copy_aql_classification()
         # Calculate AQL results(counts, status)
@@ -87,7 +84,9 @@ class QualityInspection(Document):
         # Lock readings for non-admin users
         self._lock_readings_for_non_admin()
         self.on_trash()
-        
+ 
+   
+    
     def calculate_aql_server(self):
         """
         Server-side AQL calculation: sample_size, critical, major, minor
@@ -150,6 +149,17 @@ class QualityInspection(Document):
         for r in self.readings:
             if r.specification in template_map:
                 r.custom_aql_classification = template_map[r.specification]
+        # Build map: specification -> Optional Parameter
+        template_optional_map = {
+            p.specification: p.custom_aql_optional_parameter
+            for p in template_rows
+        } 
+
+        # Apply to readings
+        for r in self.readings:
+            if r.specification in template_optional_map:
+                r.custom_aql_optional_parameter = template_optional_map[r.specification]
+
 
     def _handle_aql_regeneration(self):
         """ Regenerate AQL readings ONLY when structure changes. Safe for new + existing documents.  """
@@ -186,9 +196,7 @@ class QualityInspection(Document):
         # -------- REGENERATE --------
             self.readings = []
         self._generate_aql_readings()
-
-
-  
+ 
     def _generate_aql_readings(self):
         """  Create readings as: Sample Size x Parameters (each with its own classification)   """
         if not self.quality_inspection_template:
@@ -241,10 +249,27 @@ class QualityInspection(Document):
                 row.numeric = p.numeric
                 row.min_value = p.min_value
                 row.max_value = p.max_value
-                # row.manual_inspection = p.manual_inspection
+                #row.manual_inspection = p.manual_inspection
                 row.formula_based_criteria = p.formula_based_criteria
                 row.status = "Pending"
+                row.value = p.value
+                row.custom_aql_optional_parameter = p.custom_aql_optional_parameter                
+
+    def _override_parent_status_for_aql(self):
+        """ Override parent Quality Inspection status based on AQL results """
+        # only apply for AQL-based inspections
+        if not self.quality_inspection_template:
+            return
         
+        # if user manually set status, respect it
+        if self.has_value_changed("status"):
+            return
+        # if document is new, set to Pending
+        if self.is_new():
+            self.status = "Pending"
+            return
+        # Otherwise DO NOT let ERPNext auto-set Rejected -  Keep Pending unless user changes it
+        self.status = self.status or "Pending"    
 
     def _lock_readings_for_non_admin(self):
         """ Lock readings table for non-admin users """
@@ -495,7 +520,7 @@ def refresh_aql_logic(doc):
     doc.copy_aql_classification()
     # readings calc
     doc._handle_aql_regeneration()     
-    # Return updated doc (do not save automatically)
+    # Return updated doc (do not save automatically)    
     # doc._generate_aql_readings()
     return doc.as_dict()
 
