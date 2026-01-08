@@ -2,24 +2,31 @@ import frappe
 from frappe.utils import flt
 import json
 from frappe.model.document import Document
-from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection, cint
+from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection as ERPNextQualityInspection
 
-_orginal = QualityInspection.set_status_based_on_acceptance_values
+# _orginal = QualityInspection.set_status_based_on_acceptance_values_
 
 @frappe.whitelist()
 def set_aql_parameters(doc, method=None):
-    if isinstance(doc, str):                                               # if called from JS, 'doc' is a JSON string. must convert it to a doc object     
+    # if called from JS, 'doc' is a JSON string. must convert it to a doc object     
+    if isinstance(doc, str):                                               
         doc = frappe.get_doc(json.loads(doc))
     if not doc.reference_type or not doc.reference_name:
         frappe.msgprint("DEBUG: Missing Reference Type or Name")
         return doc.as_dict()    
-    try:                                                                    # --- TRACE 2: Load Reference Document ---  
+    # --- TRACE 2: Load Reference Document ---  
+    try:                                                                    
         ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
-    except Exception as e:                                                  #    frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
-        return doc.as_dict()                                                #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")
-    if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  # --- TRACE 3: Process Supplier Documents ---
-        s_id = ref_doc.get("supplier")                                      # Get the ID from the PR    
-        if s_id:                                                            # Fetch the actual Supplier master record
+    #    frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
+    except Exception as e:                                                  
+    #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")    
+        return doc.as_dict()                                                
+    # --- TRACE 3: Process Supplier Documents ---
+    if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  
+        # Get the ID from the PR    
+        s_id = ref_doc.get("supplier")                                      
+        # Fetch the actual Supplier master record
+        if s_id:                                                            
             s_master = frappe.get_doc("Supplier", s_id)
             # Map values
             doc.custom_aql_party_name = s_master.supplier_name
@@ -28,7 +35,8 @@ def set_aql_parameters(doc, method=None):
             doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
             doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
             doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
-    elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:          # --- TRACE 4: Process Customer Documents ---    
+    # --- TRACE 4: Process Customer Documents ---    
+    elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:          
         c_id = ref_doc.get("customer")
         if c_id:
             c_master = frappe.get_doc("Customer", c_id)
@@ -46,8 +54,10 @@ def set_aql_parameters(doc, method=None):
 
     return doc.as_dict()
 
-class QualityInspection(Document):
+class QualityInspection(ERPNextQualityInspection):
     def validate(self):
+        super().validate()
+        frappe.msgprint("CUSTOM QaulityInspection validate HIT")
         set_aql_parameters(self)
         """Ensure AQL is calculated on save/submit"""
 
@@ -56,12 +66,7 @@ class QualityInspection(Document):
                 # if this row already exists in DB
                 if row.name and not row.is_new():
                     # Prevent changing AQL-defining fields
-                    if row.has_value_changed([
-                        "specification",
-                        "parameter_group",
-                        "custom_aql_classification",
-                        "custom_aql_item_sample_no"
-                    ]):
+                    if row.has_value_changed("specification") or row.has_value_changed("parameter_group") or row.has_value_changed("custom_aql_classification") or row.has_value_changed("custom_aql_item_sample_no"):
                         frappe.throw("AQL parameters cannot be modified manually." "Change Template or Sample size to regenerate."
                        )
                 # make reading_1 and reading_value read-only based on numeric flag
@@ -71,22 +76,86 @@ class QualityInspection(Document):
                     else:
                         row.reading_1_read_only = False
                         row.reading_value_read_only = True 
-        # apply optional parameter logic
-        
-        # Override parent status for AQL results
-        self._override_parent_status_for_aql()
         # Generate / Heal AQL Readings
-        self._handle_aql_regeneration()    
+        frappe.msgprint("handle regeneration status")
+        self._handle_aql_regeneration()       
         # Copy classification from template to readings
+        frappe.msgprint("copy classification status")
         self.copy_aql_classification()
         # Calculate AQL results(counts, status)
+        frappe.msgprint("Calling aql server status")
         self.calculate_aql_server()
+        # Calculate status counts for critical, major, minor
+        frappe.msgprint("Calling status counts")
+        self.calculate_aql_status_counts()
+        # calculate AQL Status
+        frappe.msgprint("Calling updae status")
+        self.update_custom_aql_status()
+        frappe.msgprint("Done updae status")
+        # Override parent status based on AQL results
+        self._override_parent_status_for_aql()
         # Lock readings for non-admin users
         self._lock_readings_for_non_admin()
+        # only administrator/system manager can delete
         self.on_trash()
- 
-   
-    
+        return
+
+    def calculate_aql_status_counts(self):
+        """ Count rejected readings by classification and update actual result fields """
+        frappe.msgprint("HIT: calculated_aql_status_counts")
+        frappe.log_error("HIT: calculate_aql_status_counts", "AQL DEBUG")
+
+        critical_rejected = 0
+        major_rejected = 0
+        minor_rejected = 0
+
+        for row in self.readings or []:
+            if row.status != "Rejected":
+                continue
+
+            if row.custom_aql_classification == "Critical":
+                critical_rejected += 1
+            elif row.custom_aql_classification == "Major":
+                major_rejected += 1
+            elif row.custom_aql_classification == "Minor":
+                minor_rejected += 1
+
+        self.custom_aql_actual_critical_result = int(critical_rejected)
+        self.custom_aql_actual_major_result = int(major_rejected)
+        self.custom_aql_actual_minor_result = int(minor_rejected)
+
+        
+
+    def update_custom_aql_status(self):
+        """ Update custom_aql_status based on actual results vs acceptable limits """
+        frappe.msgprint("HIT: update_custom_aql_status")
+        frappe.log_error("HIT: calculate_aql_status_counts", "AQL DEBUG")
+
+        critical_actual = int(self.custom_aql_actual_critical_result or 0)
+        major_actual = int(self.custom_aql_actual_major_result or 0)
+        minor_actual = int(self.custom_aql_actual_minor_result or 0)
+
+        critical_limit = int(self.custom_aql_critical_acceptable_limit or 0)
+        major_limit = int(self.custom_aql_major_acceptable_limit or 0)
+        minor_limit = int(self.custom_aql_minor_acceptable_limit or 0)
+
+        # Default
+        self.custom_aql_status = "Accepted"
+
+        if (
+            critical_actual > critical_limit
+            or major_actual > major_limit
+            or minor_actual > minor_limit
+        ):
+            self.custom_aql_status = "Rejected"
+
+        
+        frappe.msgprint(
+        f"AQL FINAL → Critical {critical_actual}/{critical_limit}, "
+        f"Major {major_actual}/{major_limit}, Minor {minor_actual}/{minor_limit}, "
+        f"Status = {self.custom_aql_status}"
+        )
+
     def calculate_aql_server(self):
         """
         Server-side AQL calculation: sample_size, critical, major, minor
@@ -112,9 +181,9 @@ class QualityInspection(Document):
         major = calculate_aql_value(lot, level_code, major_scale)
         minor = calculate_aql_value(lot, level_code, minor_scale)
 
-        self.custom_aql_critical_acceptable_limit = int(critical["accept"])
-        self.custom_aql_major_acceptable_limit = int(major["accept"])
-        self.custom_aql_minor_acceptable_limit = int(minor["accept"])   
+        self.custom_aql_critical_acceptable_limit = critical.get("accept", 0)          ##int - removed
+        self.custom_aql_major_acceptable_limit = major.get("accept", 0)
+        self.custom_aql_minor_acceptable_limit = minor.get("accept", 0)   
         
         frappe.msgprint("Server-side AQL calculated successfully")
 
@@ -188,7 +257,7 @@ class QualityInspection(Document):
 
         # -------- PERMISSION CHECK --------
         if structure_changed:
-            if not frappe.has_role(frappe.session.user, "System Manager", "Administrator"):
+            if not any(role in frappe.get_roles() for role in ("System Manager", "Administrator")):
                 frappe.throw(
                     "Only System Manager / Administrator can regenerate AQL readings after structural changes."
             )
@@ -259,21 +328,26 @@ class QualityInspection(Document):
         """ Override parent Quality Inspection status based on AQL results """
         # only apply for AQL-based inspections
         if not self.quality_inspection_template:
+            return        
+
+        # Respect manually set statuses like Accepted or Pending
+        if self.status in ["Accepted", "Pending"]:
             return
-        
-        # if user manually set status, respect it
-        if self.has_value_changed("status"):
-            return
-        # if document is new, set to Pending
-        if self.is_new():
+
+        # Check if all readings have values
+        all_readings_filled = all(row.reading_1 or row.reading_value for row in self.readings)
+
+        # If any reading is incomplete, set status to Pending
+        if not all_readings_filled:
             self.status = "Pending"
             return
-        # Otherwise DO NOT let ERPNext auto-set Rejected -  Keep Pending unless user changes it
-        self.status = self.status or "Pending"    
+
+        # If all readings are filled and no other conditions apply, keep status as is
+        self.status = self.status or "Pending"
 
     def _lock_readings_for_non_admin(self):
         """ Lock readings table for non-admin users """
-        if not frappe.has_role(frappe.session.user, "System Manager", "Administrator"):
+        if not any(role in frappe.get_roles() for role in ("System Manager", "Administrator")):
             return
 
         if not self.is_new():
@@ -304,26 +378,72 @@ class QualityInspection(Document):
                         frappe.throw("Only Administrator or System Manager can modify Quality Inspection Readings.")
 
     def on_trash(self):
-        if not frappe.has_role(frappe.session.user, "System Manager", "Administrator"):
+        if not any(role in frappe.get_roles() for role in ("System Manager", "Administrator")):
             frappe.throw("Only Administrator or System Manager can delete Quality Inspections.")     
 
-    def _needs_aql_regeneration(self):
-        """Decide if AQL readings must be regenerated     """
-        if self.is_new():
-            return True
+    def set_status_based_on_acceptance_values_(self):
+        """Override ERPNext's default status logic to enforce custom AQL rules."""
+        # Respect manually set statuses like Accepted or Pending
+        if self.status in ["Accepted", "Pending"]:
+            return
 
-        if self.has_value_changed("sample_size"):
-            return True
+        # Check if all readings have values
+        all_readings_filled = all(
+            row.reading_1 or row.reading_value for row in self.readings
+        )
 
-        if self.has_value_changed("quality_inspection_template"):
-            return True
+        # If any reading is incomplete, set status to Pending
+        if not all_readings_filled:
+            self.status = "Pending"
+            return
 
-        if self.has_value_changed("custom_aql_inspection_level"):
-            return True
+        # Calculate AQL status counts
+        self.calculate_aql_status_counts()
 
-        return False
-                           
-                
+        # Default to Rejected if any critical limits are exceeded
+        if (
+            self.custom_aql_actual_critical_result > self.custom_aql_critical_acceptable_limit
+            or self.custom_aql_actual_major_result > self.custom_aql_major_acceptable_limit
+            or self.custom_aql_actual_minor_result > self.custom_aql_minor_acceptable_limit
+        ):
+            self.status = "Rejected"
+        else:
+            self.status = "Accepted"
+
+    def inspect_and_set_status_(self):
+        """Custom implementation to enforce AQL rules and handle default Pending status."""
+        for reading in self.readings:
+            if not reading.manual_inspection:  # don't auto set status if manual
+                if not (reading.reading_1 or reading.reading_value):
+                    # Default to Pending if no values are provided
+                    reading.status = "Pending"
+                elif reading.formula_based_criteria:
+                    self.set_status_based_on_acceptance_formula(reading)
+                else:
+                    # if not formula-based, check acceptance values set
+                    self.set_status_based_on_acceptance_values_(reading)
+
+        # Custom logic to enforce Pending or Accepted status
+        all_readings_filled = all(
+            row.reading_1 or row.reading_value for row in self.readings
+        )
+
+        if not all_readings_filled:
+            self.status = "Pending"
+            frappe.msgprint("Status set to Pending due to incomplete readings.", alert=True)
+            return
+
+        # Default to Accepted unless any reading is Rejected
+        self.status = "Accepted"
+        for reading in self.readings:
+            if reading.status == "Rejected":
+                self.status = "Rejected"
+                frappe.msgprint(
+                    _("Status set to Rejected as there are one or more rejected readings."), alert=True
+                )
+                break
+
+
 # -------------------------            
 
 # 🔥 WHITELISTED WRAPPER (THIS IS WHAT JS CALLS)
@@ -520,10 +640,43 @@ def refresh_aql_logic(doc):
     doc.copy_aql_classification()
     # readings calc
     doc._handle_aql_regeneration()     
-    # Return updated doc (do not save automatically)    
-    # doc._generate_aql_readings()
+   
     return doc.as_dict()
 
+@frappe.whitelist()
+def calculate_aql_status_counts(doc):
+    """Calculate AQL status counts and return updated values"""
+
+    if isinstance(doc, str):
+        doc = frappe.get_doc(json.loads(doc))
+
+    if not isinstance(doc, QualityInspection):
+        doc.__class__ = QualityInspection
+
+    # 1️⃣ Calculate counts
+    doc.calculate_aql_status_counts()
+
+    # 3️⃣ Return everything
+    return {
+        "custom_aql_actual_critical_result": doc.custom_aql_actual_critical_result,
+        "custom_aql_actual_major_result": doc.custom_aql_actual_major_result,
+        "custom_aql_actual_minor_result": doc.custom_aql_actual_minor_result
+    }
+
+@frappe.whitelist()
+def update_custom_aql_status(doc):
+    """ update aql calc status """    
+    if isinstance(doc, str):
+        doc = frappe.get_doc(json.loads(doc))
+
+    if not isinstance(doc, QualityInspection):
+        doc.__class__ = QualityInspection
+
+    doc.update_custom_aql_status()
+
+    return {
+        "custom_aql_status": doc.custom_aql_status
+    }        
     
 @frappe.whitelist()
 def run_copy_aql_classification(doc):

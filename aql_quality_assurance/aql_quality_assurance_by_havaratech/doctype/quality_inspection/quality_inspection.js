@@ -50,10 +50,9 @@ function refresh_aql_values(frm) {
     });
 }
 
-/*************************************************
+/*************************************************************************************************************************************************************
  * AQL STEP-1 : SAMPLE SIZE CALCULATION
- * ERPNext – Quality Inspection
- *************************************************/
+ *************************************************************************************************************************************************************/
 
 /*************************************************
  * AQL LOOKUP TABLES & HELPERS (MUST BE ON TOP)
@@ -179,9 +178,9 @@ function get_sample_size(lot_size, inspection_level) {
     };
 }
 
-/*************************************************
+/***********************************************************************************************************************************************************
  * QUALITY INSPECTION FORM SCRIPT
- *************************************************/
+ ***********************************************************************************************************************************************************/
 
 frappe.ui.form.on('Quality Inspection', {
     refresh(frm) {
@@ -194,9 +193,9 @@ frappe.ui.form.on('Quality Inspection', {
     }
 });
 
-/*************************************************
+/***********************************************************************************************************************************************************
  * MAIN CALCULATION – STEP-1 ONLY
- *************************************************/
+ ***********************************************************************************************************************************************************/
 
 function calculate_aql_sample_size(frm) {
 
@@ -227,9 +226,9 @@ function calculate_aql_sample_size(frm) {
     console.log("AQL STEP-1 RESULT", result);
 }
 
-/*************************************************
+/************************************************************************************************************************************************************
  * AQL ACCEPT / REJECT TABLE (STEP-2)
- *************************************************/
+ ************************************************************************************************************************************************************/
 
 const AQLAcceptReject = {
     "A0.065":"0,1","A0.10":"0,1","A0.15":"0,1","A0.25":"0,1","A0.40":"0,1","A0.65":"0,1","A1.0":"0,1","A1.5":"0,1","A2.5":"0,1","A4.0":"0,1","A6.5":"0,1",
@@ -316,7 +315,8 @@ function calculate_aql_accept_reject(frm) {
         letter, critical, major, minor
     });
 }
-
+//**********************************************************************************************************************************************************
+// *********************************************************************************************************************************************************/
 frappe.ui.form.on('Quality Inspection', {
     refresh(frm) {
         frm.add_custom_button(
@@ -326,7 +326,8 @@ frappe.ui.form.on('Quality Inspection', {
         );
     }
 });
-
+//**********************************************************************************************************************************************************
+// *********************************************************************************************************************************************************/
 frappe.ui.form.on('Quality Inspection', {
     refresh(frm) {
         console.log("AQL Logic script refresh fired");
@@ -347,28 +348,97 @@ frappe.ui.form.on('Quality Inspection', {
             }
     }
 });
+//***********************************************************************************************************************************************************
+// ************************************************************************************************************************************************************/
+// add button for calculating AQL status
+frappe.ui.form.on('Quality Inspection', {
+    refresh(frm) {
+        console.log("AQL Status Calculation Overall script refresh fired");
+        frm.add_custom_button(__('5 - Calculate AQL Counts'), () => {
+            frappe.call({
+                method: "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.calculate_aql_status_counts",
+                args: { doc: frm.doc },
+                callback: function(r) {
+                    if (r.message) {
+                        frm.set_value("custom_aql_actual_critical_result", parseInt(r.message.custom_aql_actual_critical_result));
+                        frm.set_value("custom_aql_actual_major_result", parseInt(r.message.custom_aql_actual_major_result));
+                        frm.set_value("custom_aql_actual_minor_result", parseInt(r.message.custom_aql_actual_minor_result));
+                        frm.refresh_fields();
+                        frappe.show_alert({ message: __('AQL Status Calculated'), indicator: 'green' });
+                    }
+                }
+            });
+        }, __('Actions'));
+    }
+}); 
+//***********************************************************************************************************************************************************
+// **********************************************************************************************************************************************************/
+frappe.ui.form.on('Quality Inspection', {
+    refresh(frm) {
+        console.log("AQL Status Calculation Overall script refresh fired");
+        frm.add_custom_button(__('6 - Calculate AQL Status'), () => {
+            frappe.call({
+                method: "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.update_custom_aql_status",
+                args: { doc: frm.doc },
+                callback: function(r) {
+                    if (r.message) {
+                        frm.set_value("custom_aql_status", (r.message.custom_aql_status))
+                        frm.refresh_fields();
+                        frappe.show_alert({ message: __('AQL Status Calculated'), indicator: 'green' });
+                    }
+                }
+            });
+        }, __('Actions'));
+    }
+});
+
+/***************************************************************************************************************************************************************
+ ***************************************************************************************************************************************************************/ 
+
+
 //***************************************************************//
 // Keep reading_1 and reading_value read-only based on numeric flag
 //***************************************************************//
 
 frappe.ui.form.on('Quality Inspection', {
     refresh(frm) {
-        // Apply once after grid renders
         console.log("Readonly logic applied on refresh");
-            apply_all_aql_rules(frm);
-            frm.fields_dict.readings.grid.refresh();
+        // Ensure rules are applied after grid renders
+        frm.fields_dict.readings.grid.refresh();
+        setTimeout(() => apply_all_aql_rules(frm), 100); // Delay to ensure grid rows are ready
+    },
+    onload(frm) {
+        console.log("Readonly logic applied on form load");
+        setTimeout(() => apply_all_aql_rules(frm), 100); // Apply rules on form load
+    },
+    validate(frm) {
+        console.log("Readonly logic applied on validate");
+        apply_all_aql_rules(frm); // Apply rules before saving
+    },
+    change(frm) {
+        console.log("Readonly logic applied on change");
+        apply_all_aql_rules(frm); // Apply rules on any change
+    },
+    refresh(frm){
+        console.log("Form reloaded - applied readonly")
+        apply_all_aql_rules(frm);
     }
 });
 
 frappe.ui.form.on('Quality Inspection Reading', {
-    form_render(frm, cdt, cdn) {
-        console.log("Readonly logic applied on form render");
-        const row = locals[cdt][cdn];
-        apply_row_rule(frm, row);
-    },
-
     numeric(frm, cdt, cdn) {
         const row = locals[cdt][cdn];
+        console.log("Readonly logic applied on numeric toggle");
+        apply_row_rule(frm, row);
+    },
+    reading_1(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        console.log("Readonly logic applied on reading_1 change");
+        apply_row_rule(frm, row);
+    },
+    reading_value(frm, cdt, cdn) {
+        const row = locals[cdt][cdn];
+        console.log("Readonly logic applied on reading_value change");
         apply_row_rule(frm, row);
     }
 });
@@ -385,12 +455,18 @@ function apply_all_aql_rules(frm) {
 function apply_row_rule(frm, row) {
     const grid = frm.fields_dict.readings.grid;
     const grid_row = grid.grid_rows_by_docname[row.name];
-    if (!grid_row) return;
+    console.log("Grid row:", grid_row); // Debugging log
+    if (!grid_row) {
+        console.log("Grid row not found for row:", row.name); // Debugging log
+        return;
+    }
 
     const is_numeric = cint(row.numeric);
 
     const $reading_1 = grid_row.row.find('[data-fieldname="reading_1"] input');
     const $reading_value = grid_row.row.find('[data-fieldname="reading_value"] input');
+
+    console.log("Selectors for reading_1 and reading_value:", $reading_1, $reading_value); // Debugging log
 
     if (is_numeric) {
         enable($reading_1);
@@ -430,3 +506,34 @@ function enable($el) {
     `;
     document.head.appendChild(style);
 })();
+
+//---------------------------------------------------------//
+// END OF READONLY LOGIC BASED ON NUMERIC FLAG
+//---------------------------------------------------------//   
+
+//*************************************************//
+// Need sum of counts of rejected readings by classification from quality inspection readings table and update 
+// custom_actual_critical_result, custom_actual_major_result, custom_actual_minor_result fields in quality inspection
+// on form load dynamically and no button click needed  
+//*************************************************//
+frappe.ui.form.on('Quality Inspection', {
+    refresh(frm) {
+        console.log("AQL Status Calculation Overall script refresh fired");
+            frappe.call({
+                method: "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.calculate_aql_status_counts",
+                args: { doc: frm.doc },
+                callback: function(r) {
+                    if (r.message) {
+                        frm.set_value("custom_aql_actual_critical_result", parseInt(r.message.custom_aql_actual_critical_result));
+                        frm.set_value("custom_aql_actual_major_result", parseInt(r.message.custom_aql_actual_major_result));
+                        frm.set_value("custom_aql_actual_minor_result", parseInt(r.message.custom_aql_actual_minor_result));
+                        frm.refresh_fields();
+                        frappe.show_alert({ message: __('AQL Status Calculated'), indicator: 'green' });
+                    }
+                }
+            });
+    }
+});
+
+
+

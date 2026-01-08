@@ -9,6 +9,9 @@ app_license = "mit"
 # ------------------
 
 # required_apps = []
+# app_include_py = [
+#     "aql_quality_assurance.aql_quality_assurance_by_havaratech.patches.quality_inspection_patch"
+# ]
 
 fixtures = [
     {
@@ -142,9 +145,10 @@ doctype_js = {
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
+override_doctype_class = {
+    "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection"
 # 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+}
 
 # Document Events
 # ---------------
