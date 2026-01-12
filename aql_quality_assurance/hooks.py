@@ -183,13 +183,13 @@ doc_events = {
     },
     "Delivery Note": {  
         "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.delivery_note.delivery_note.copy_aql_from_customer"
-    },
-    # "Quality Inspection": {
-    #     "after_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection._apply_optional_parameter_logic"
-    # },
-    "Quality Inspection Reading": {
-        "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection_reading.quality_inspection_reading.copy_aql_classification"
     }
+    # "Quality Inspection": {
+    #     "onload": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection"
+    # }
+    # "Quality Inspection Reading": {
+    #     "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection_reading.quality_inspection_reading.copy_aql_classification"
+    # }
 }
 
 # Scheduled Tasks

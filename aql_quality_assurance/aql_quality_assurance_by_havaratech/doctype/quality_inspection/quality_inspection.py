@@ -3,8 +3,7 @@ from frappe.utils import flt
 import json
 from frappe.model.document import Document
 from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection as ERPNextQualityInspection
-
-# _orginal = QualityInspection.set_status_based_on_acceptance_values_
+from frappe.utils import cint
 
 @frappe.whitelist()
 def set_aql_parameters(doc, method=None):
@@ -56,11 +55,11 @@ def set_aql_parameters(doc, method=None):
 
 class QualityInspection(ERPNextQualityInspection):
     def validate(self):
+        self._capture_user_hold_status()
         super().validate()
         frappe.msgprint("CUSTOM QaulityInspection validate HIT")
         set_aql_parameters(self)
         """Ensure AQL is calculated on save/submit"""
-
         if self.readings and not frappe.flags.in_patch:
             for row in self.readings:
                 # if this row already exists in DB
@@ -75,31 +74,113 @@ class QualityInspection(ERPNextQualityInspection):
                         row.reading_value_read_only = False
                     else:
                         row.reading_1_read_only = False
-                        row.reading_value_read_only = True 
+                        row.reading_value_read_only = True
+                
+                        
         # Generate / Heal AQL Readings
         frappe.msgprint("handle regeneration status")
-        self._handle_aql_regeneration()       
+        self._handle_aql_regeneration() 
+
         # Copy classification from template to readings
         frappe.msgprint("copy classification status")
         self.copy_aql_classification()
+
         # Calculate AQL results(counts, status)
         frappe.msgprint("Calling aql server status")
         self.calculate_aql_server()
+
+         # Post-process AQL logic
+        self._apply_optional_parameter_logic()
+        self._restore_hold_status()
+
         # Calculate status counts for critical, major, minor
         frappe.msgprint("Calling status counts")
         self.calculate_aql_status_counts()
-        # calculate AQL Status
-        frappe.msgprint("Calling updae status")
-        self.update_custom_aql_status()
-        frappe.msgprint("Done updae status")
-        # Override parent status based on AQL results
-        self._override_parent_status_for_aql()
-        # Lock readings for non-admin users
-        self._lock_readings_for_non_admin()
-        # only administrator/system manager can delete
-        self.on_trash()
-        return
 
+        # calculate AQL Status
+        frappe.msgprint("Calling update status")
+        self.update_custom_aql_status()
+        frappe.msgprint("Done update status")
+
+        # Override parent status based on AQL results
+        if self.custom_aql_status:
+            self.manual_inspection = 1
+            self.status = self.custom_aql_status
+        
+        # Lock readings for non-admin users
+        # self._lock_readings_for_non_admin()
+        # only administrator/system manager can delete
+    
+        
+
+    ##***************************************************************************************************************************
+    # ---------------------------------------------------------------------
+    # 1️⃣ OPTIONAL PARAMETER LOGIC
+    # ---------------------------------------------------------------------
+    def _apply_optional_parameter_logic(self):
+        """ If optional_parameter is enabled and no reading is provided, force status = Accepted """
+        frappe.msgprint("HIT: Optional Parameter logic")
+        for row in self.readings:
+            if not cint(row.get("custom_aql_optional_parameter")) == 1:
+                continue
+            # Check if ANY value is entered
+            has_input = False
+
+            if row.get("reading_value") and str(row.get("reading_value")).strip():
+                has_input = True
+
+            for i in range(1, 11):
+                val = row.get(f"reading_{i}")
+                if val is not None and str(val).strip():
+                    has_input = True
+                    break
+
+            # If optional + no input → Accepted
+            if not has_input:
+                row.status = "Accepted"
+                frappe.msgprint(
+                    f"Optional Parameter -> Accepted (Row {row.idx})"
+                )
+
+    from frappe.utils import cint   
+    
+    # ---------------------------------------------------------------------
+    # 2️⃣ DERIVE CUSTOM AQL STATUS
+    # ---------------------------------------------------------------------
+    
+    def _row_has_input(self, row):
+    # Non-numeric
+        if row.get("reading_value") and str(row.get("reading_value")).strip():
+            return True
+    # Numeric
+        for i in range(1, 11):
+            val = row.get(f"reading_{i}")
+            if val is not None and str(val).strip():
+                return True
+        return False
+
+    def _capture_user_hold_status(self):
+        self._hold_map = {}
+        for row in self.readings:
+            if cint(row.custom_aql_optional_parameter) == 1:
+                continue
+            if row.status in ("Pending", "On Hold") and not self._row_has_input(row):
+                self._hold_map[row.name] = row.status
+
+
+    def _restore_hold_status(self):
+        for row in self.readings:
+            if cint(row.custom_aql_optional_parameter) == 1:
+                continue
+            if row.name in getattr(self, "_hold_map", {}):
+                # If user entered data now, do NOT restore
+                if self._row_has_input(row):
+                    continue
+                row.status = self._hold_map[row.name]
+
+
+    ##***************************************************************************************************************************
+    # This logic is working fine
     def calculate_aql_status_counts(self):
         """ Count rejected readings by classification and update actual result fields """
         frappe.msgprint("HIT: calculated_aql_status_counts")
@@ -148,6 +229,23 @@ class QualityInspection(ERPNextQualityInspection):
             or minor_actual > minor_limit
         ):
             self.custom_aql_status = "Rejected"
+            return
+        
+        has_on_hold = False
+        has_pending = False
+
+        for row in self.readings:
+            if row.status == "On Hold":
+                has_on_hold = True
+            elif row.status == "Pending":
+                has_pending = True
+
+        if has_on_hold:
+            self.custom_aql_status = "On Hold"
+        elif has_pending:
+            self.custom_aql_status = "Pending"
+        else:
+            self.custom_aql_status = "Accepted"        
 
         
         frappe.msgprint(
@@ -324,27 +422,6 @@ class QualityInspection(ERPNextQualityInspection):
                 row.value = p.value
                 row.custom_aql_optional_parameter = p.custom_aql_optional_parameter                
 
-    def _override_parent_status_for_aql(self):
-        """ Override parent Quality Inspection status based on AQL results """
-        # only apply for AQL-based inspections
-        if not self.quality_inspection_template:
-            return        
-
-        # Respect manually set statuses like Accepted or Pending
-        if self.status in ["Accepted", "Pending"]:
-            return
-
-        # Check if all readings have values
-        all_readings_filled = all(row.reading_1 or row.reading_value for row in self.readings)
-
-        # If any reading is incomplete, set status to Pending
-        if not all_readings_filled:
-            self.status = "Pending"
-            return
-
-        # If all readings are filled and no other conditions apply, keep status as is
-        self.status = self.status or "Pending"
-
     def _lock_readings_for_non_admin(self):
         """ Lock readings table for non-admin users """
         if not any(role in frappe.get_roles() for role in ("System Manager", "Administrator")):
@@ -381,71 +458,7 @@ class QualityInspection(ERPNextQualityInspection):
         if not any(role in frappe.get_roles() for role in ("System Manager", "Administrator")):
             frappe.throw("Only Administrator or System Manager can delete Quality Inspections.")     
 
-    def set_status_based_on_acceptance_values_(self):
-        """Override ERPNext's default status logic to enforce custom AQL rules."""
-        # Respect manually set statuses like Accepted or Pending
-        if self.status in ["Accepted", "Pending"]:
-            return
-
-        # Check if all readings have values
-        all_readings_filled = all(
-            row.reading_1 or row.reading_value for row in self.readings
-        )
-
-        # If any reading is incomplete, set status to Pending
-        if not all_readings_filled:
-            self.status = "Pending"
-            return
-
-        # Calculate AQL status counts
-        self.calculate_aql_status_counts()
-
-        # Default to Rejected if any critical limits are exceeded
-        if (
-            self.custom_aql_actual_critical_result > self.custom_aql_critical_acceptable_limit
-            or self.custom_aql_actual_major_result > self.custom_aql_major_acceptable_limit
-            or self.custom_aql_actual_minor_result > self.custom_aql_minor_acceptable_limit
-        ):
-            self.status = "Rejected"
-        else:
-            self.status = "Accepted"
-
-    def inspect_and_set_status_(self):
-        """Custom implementation to enforce AQL rules and handle default Pending status."""
-        for reading in self.readings:
-            if not reading.manual_inspection:  # don't auto set status if manual
-                if not (reading.reading_1 or reading.reading_value):
-                    # Default to Pending if no values are provided
-                    reading.status = "Pending"
-                elif reading.formula_based_criteria:
-                    self.set_status_based_on_acceptance_formula(reading)
-                else:
-                    # if not formula-based, check acceptance values set
-                    self.set_status_based_on_acceptance_values_(reading)
-
-        # Custom logic to enforce Pending or Accepted status
-        all_readings_filled = all(
-            row.reading_1 or row.reading_value for row in self.readings
-        )
-
-        if not all_readings_filled:
-            self.status = "Pending"
-            frappe.msgprint("Status set to Pending due to incomplete readings.", alert=True)
-            return
-
-        # Default to Accepted unless any reading is Rejected
-        self.status = "Accepted"
-        for reading in self.readings:
-            if reading.status == "Rejected":
-                self.status = "Rejected"
-                frappe.msgprint(
-                    _("Status set to Rejected as there are one or more rejected readings."), alert=True
-                )
-                break
-
-
 # -------------------------            
-
 # 🔥 WHITELISTED WRAPPER (THIS IS WHAT JS CALLS)
 @frappe.whitelist()
 def run_calculate_aql_server(name):
