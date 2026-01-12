@@ -5,58 +5,24 @@ from frappe.model.document import Document
 from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection as ERPNextQualityInspection
 from frappe.utils import cint
 
-@frappe.whitelist()
-def set_aql_parameters(doc, method=None):
-    # if called from JS, 'doc' is a JSON string. must convert it to a doc object     
-    if isinstance(doc, str):                                               
-        doc = frappe.get_doc(json.loads(doc))
-    if not doc.reference_type or not doc.reference_name:
-        frappe.msgprint("DEBUG: Missing Reference Type or Name")
-        return doc.as_dict()    
-    # --- TRACE 2: Load Reference Document ---  
-    try:                                                                    
-        ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
-    #    frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
-    except Exception as e:                                                  
-    #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")    
-        return doc.as_dict()                                                
-    # --- TRACE 3: Process Supplier Documents ---
-    if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  
-        # Get the ID from the PR    
-        s_id = ref_doc.get("supplier")                                      
-        # Fetch the actual Supplier master record
-        if s_id:                                                            
-            s_master = frappe.get_doc("Supplier", s_id)
-            # Map values
-            doc.custom_aql_party_name = s_master.supplier_name
-            doc.custom_aql_party_type = s_master.supplier_type
-            doc.custom_aql_inspection_level = s_master.get("custom_aql_inspection_level")
-            doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
-            doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
-            doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
-    # --- TRACE 4: Process Customer Documents ---    
-    elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:          
-        c_id = ref_doc.get("customer")
-        if c_id:
-            c_master = frappe.get_doc("Customer", c_id)
-            doc.custom_aql_party_name = c_master.customer_name
-            doc.custom_aql_party_type = c_master.customer_type
-            doc.custom_aql_inspection_level = c_master.get("custom_aql_inspection_level")
-            doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
-            doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
-            doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
-
-    # Lot size logic
-    if doc.item_code:
-        qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
-        doc.custom_aql_lot_size = qty
-
-    return doc.as_dict()
-
 class QualityInspection(ERPNextQualityInspection):
+    def on_update(self):
+        frappe.msgprint("AFTER INSERT HIT")
+
+        # Refresh AQL parameters from supplier/customer
+        set_aql_parameters(self)
+        # Calculate sample size & accept/reject limits
+        self.calculate_aql_server()
+        # Get classification copied
+        self.copy_aql_classification()
+        # readings calc
+        self._handle_aql_regeneration()
+        self.save(ignore_permissions=True)
+
     def validate(self):
         self._capture_user_hold_status()
         super().validate()
+        self._apply_reading_field_restrictions()
         frappe.msgprint("CUSTOM QaulityInspection validate HIT")
         set_aql_parameters(self)
         """Ensure AQL is calculated on save/submit"""
@@ -109,8 +75,7 @@ class QualityInspection(ERPNextQualityInspection):
         
         # Lock readings for non-admin users
         # self._lock_readings_for_non_admin()
-        # only administrator/system manager can delete
-    
+        # only administrator/system manager can delete 
         
 
     ##***************************************************************************************************************************
@@ -181,6 +146,7 @@ class QualityInspection(ERPNextQualityInspection):
 
     ##***************************************************************************************************************************
     # This logic is working fine
+    # ***************************************************************************************************************
     def calculate_aql_status_counts(self):
         """ Count rejected readings by classification and update actual result fields """
         frappe.msgprint("HIT: calculated_aql_status_counts")
@@ -458,19 +424,32 @@ class QualityInspection(ERPNextQualityInspection):
         if not any(role in frappe.get_roles() for role in ("System Manager", "Administrator")):
             frappe.throw("Only Administrator or System Manager can delete Quality Inspections.")     
 
-# -------------------------            
-# 🔥 WHITELISTED WRAPPER (THIS IS WHAT JS CALLS)
-@frappe.whitelist()
-def run_calculate_aql_server(name):
-    """
-    Button-triggered AQL calculation
-    """
-    doc = frappe.get_doc("Quality Inspection", name)
-    doc.calculate_aql_server()
-    doc.save()
-    return {
-        "status": "success",
-    }
+    def _is_restricted_reading_mode(self):
+        return frappe.db.get_single_value(
+            "AQL Classification Quality Inspection Setting",
+            "quality_inspection_reading_settings"
+        ) == 1
+
+    def _apply_reading_field_restrictions(self):
+        """
+        When restricted mode is ON:
+        - All fields in Readings table are read-only
+        - Except reading_1 … reading_10 and reading_value
+        """
+
+        if not self._is_restricted_reading_mode():
+            return
+
+        allowed = {"reading_value"} | {f"reading_{i}" for i in range(1, 11)}
+
+        for row in self.readings:
+            for field in row.meta.fields:
+                fname = field.fieldname
+
+                if fname in allowed:
+                    row.set(f"{fname}_read_only", 0)
+                else:
+                    row.set(f"{fname}_read_only", 1)
 
 # -------------------------
 # SERVER-SIDE HELPER FUNCTIONS
@@ -732,5 +711,67 @@ def run_copy_aql_classification(doc):
 
     return doc.as_dict()
 
+@frappe.whitelist()
+def set_aql_parameters(doc, method=None):
+    # if called from JS, 'doc' is a JSON string. must convert it to a doc object     
+    if isinstance(doc, str):                                               
+        doc = frappe.get_doc(json.loads(doc))
+    if not doc.reference_type or not doc.reference_name:
+        frappe.msgprint("DEBUG: Missing Reference Type or Name")
+        return doc.as_dict()    
+    # --- TRACE 2: Load Reference Document ---  
+    try:                                                                    
+        ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
+    #    frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
+    except Exception as e:                                                  
+    #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")    
+        return doc.as_dict()                                                
+    # --- TRACE 3: Process Supplier Documents ---
+    if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  
+        # Get the ID from the PR    
+        s_id = ref_doc.get("supplier")                                      
+        # Fetch the actual Supplier master record
+        if s_id:                                                            
+            s_master = frappe.get_doc("Supplier", s_id)
+            # Map values
+            doc.custom_aql_party_name = s_master.supplier_name
+            doc.custom_aql_party_type = s_master.supplier_type
+            doc.custom_aql_inspection_level = s_master.get("custom_aql_inspection_level")
+            doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
+            doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
+            doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
+    # --- TRACE 4: Process Customer Documents ---    
+    elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:          
+        c_id = ref_doc.get("customer")
+        if c_id:
+            c_master = frappe.get_doc("Customer", c_id)
+            doc.custom_aql_party_name = c_master.customer_name
+            doc.custom_aql_party_type = c_master.customer_type
+            doc.custom_aql_inspection_level = c_master.get("custom_aql_inspection_level")
+            doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
+            doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
+            doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
+
+    # Lot size logic
+    if doc.item_code:
+        qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
+        doc.custom_aql_lot_size = qty
+
+    return doc.as_dict()
+
+# -------------------------            
+# 🔥 WHITELISTED WRAPPER (THIS IS WHAT JS CALLS)
+# -------------------------
+@frappe.whitelist()
+def run_calculate_aql_server(name):
+    """
+    Button-triggered AQL calculation
+    """
+    doc = frappe.get_doc("Quality Inspection", name)
+    doc.calculate_aql_server()
+    doc.save()
+    return {
+        "status": "success",
+    }
 
 

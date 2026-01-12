@@ -9,9 +9,8 @@ app_license = "mit"
 # ------------------
 
 # required_apps = []
-# app_include_py = [
-#     "aql_quality_assurance.aql_quality_assurance_by_havaratech.patches.quality_inspection_patch"
-# ]
+# app_include_py = []
+    
 
 fixtures = [
     {
