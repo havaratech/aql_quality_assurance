@@ -6,24 +6,11 @@ from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityI
 from frappe.utils import cint
 
 class QualityInspection(ERPNextQualityInspection):
-    def on_update(self):
-        frappe.msgprint("AFTER INSERT HIT")
-
-        # Refresh AQL parameters from supplier/customer
-        set_aql_parameters(self)
-        # Calculate sample size & accept/reject limits
-        self.calculate_aql_server()
-        # Get classification copied
-        self.copy_aql_classification()
-        # readings calc
-        self._handle_aql_regeneration()
-        self.save(ignore_permissions=True)
-
+        
     def validate(self):
         self._capture_user_hold_status()
         super().validate()
         self._apply_reading_field_restrictions()
-        frappe.msgprint("CUSTOM QaulityInspection validate HIT")
         set_aql_parameters(self)
         """Ensure AQL is calculated on save/submit"""
         if self.readings and not frappe.flags.in_patch:
@@ -44,15 +31,12 @@ class QualityInspection(ERPNextQualityInspection):
                 
                         
         # Generate / Heal AQL Readings
-        frappe.msgprint("handle regeneration status")
         self._handle_aql_regeneration() 
 
         # Copy classification from template to readings
-        frappe.msgprint("copy classification status")
         self.copy_aql_classification()
 
         # Calculate AQL results(counts, status)
-        frappe.msgprint("Calling aql server status")
         self.calculate_aql_server()
 
          # Post-process AQL logic
@@ -60,23 +44,68 @@ class QualityInspection(ERPNextQualityInspection):
         self._restore_hold_status()
 
         # Calculate status counts for critical, major, minor
-        frappe.msgprint("Calling status counts")
         self.calculate_aql_status_counts()
 
         # calculate AQL Status
-        frappe.msgprint("Calling update status")
         self.update_custom_aql_status()
-        frappe.msgprint("Done update status")
 
         # Override parent status based on AQL results
-        if self.custom_aql_status:
-            self.manual_inspection = 1
-            self.status = self.custom_aql_status
+        self.manual_inspection = 1
+        if cint(self.custom_aql_status_override) == 0:
+            self.status = self.custom_aql_status            
         
         # Lock readings for non-admin users
         # self._lock_readings_for_non_admin()
         # only administrator/system manager can delete 
         
+    #---------------------------------------------------------------------------------------------------------------------------
+
+    def set_aql_parameters(doc):
+    # if called from JS, 'doc' is a JSON string. must convert it to a doc object     
+        if isinstance(doc, str):                                               
+            doc = frappe.get_doc(json.loads(doc))
+        if not doc.reference_type or not doc.reference_name:
+            frappe.msgprint("DEBUG: Missing Reference Type or Name")
+            return doc.as_dict()    
+        # --- TRACE 2: Load Reference Document ---  
+        try:                                                                    
+            ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
+            # frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
+        except Exception as e:                                                  
+            frappe.msgprint(f"DEBUG: Error loading reference: {e}")    
+            return doc.as_dict()                                                
+        # --- TRACE 3: Process Supplier Documents ---
+        if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  
+            # Get the ID from the PR    
+            s_id = ref_doc.get("supplier")                                      
+            # Fetch the actual Supplier master record
+            if s_id:                                                            
+                s_master = frappe.get_doc("Supplier", s_id)
+                # Map values
+                doc.custom_aql_party_name = s_master.supplier_name
+                doc.custom_aql_party_type = s_master.supplier_type
+                doc.custom_aql_inspection_level = s_master.get("custom_aql_inspection_level")
+                doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
+                doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
+                doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
+        # --- TRACE 4: Process Customer Documents ---    
+        elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:          
+            c_id = ref_doc.get("customer")
+            if c_id:
+                c_master = frappe.get_doc("Customer", c_id)
+                doc.custom_aql_party_name = c_master.customer_name
+                doc.custom_aql_party_type = c_master.customer_type
+                doc.custom_aql_inspection_level = c_master.get("custom_aql_inspection_level")
+                doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
+                doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
+                doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
+
+        # Lot size logic
+        if doc.item_code:
+            qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
+            doc.custom_aql_lot_size = qty
+
+        return doc.as_dict()
 
     ##***************************************************************************************************************************
     # ---------------------------------------------------------------------
@@ -84,8 +113,8 @@ class QualityInspection(ERPNextQualityInspection):
     # ---------------------------------------------------------------------
     def _apply_optional_parameter_logic(self):
         """ If optional_parameter is enabled and no reading is provided, force status = Accepted """
-        frappe.msgprint("HIT: Optional Parameter logic")
         for row in self.readings:
+            
             if not cint(row.get("custom_aql_optional_parameter")) == 1:
                 continue
             # Check if ANY value is entered
@@ -103,9 +132,7 @@ class QualityInspection(ERPNextQualityInspection):
             # If optional + no input → Accepted
             if not has_input:
                 row.status = "Accepted"
-                frappe.msgprint(
-                    f"Optional Parameter -> Accepted (Row {row.idx})"
-                )
+                
 
     from frappe.utils import cint   
     
@@ -149,8 +176,6 @@ class QualityInspection(ERPNextQualityInspection):
     # ***************************************************************************************************************
     def calculate_aql_status_counts(self):
         """ Count rejected readings by classification and update actual result fields """
-        frappe.msgprint("HIT: calculated_aql_status_counts")
-        frappe.log_error("HIT: calculate_aql_status_counts", "AQL DEBUG")
 
         critical_rejected = 0
         major_rejected = 0
@@ -175,8 +200,6 @@ class QualityInspection(ERPNextQualityInspection):
 
     def update_custom_aql_status(self):
         """ Update custom_aql_status based on actual results vs acceptable limits """
-        frappe.msgprint("HIT: update_custom_aql_status")
-        frappe.log_error("HIT: calculate_aql_status_counts", "AQL DEBUG")
 
         critical_actual = int(self.custom_aql_actual_critical_result or 0)
         major_actual = int(self.custom_aql_actual_major_result or 0)
@@ -245,11 +268,9 @@ class QualityInspection(ERPNextQualityInspection):
         major = calculate_aql_value(lot, level_code, major_scale)
         minor = calculate_aql_value(lot, level_code, minor_scale)
 
-        self.custom_aql_critical_acceptable_limit = critical.get("accept", 0)          ##int - removed
+        self.custom_aql_critical_acceptable_limit = critical.get("accept", 0) 
         self.custom_aql_major_acceptable_limit = major.get("accept", 0)
         self.custom_aql_minor_acceptable_limit = minor.get("accept", 0)   
-        
-        frappe.msgprint("Server-side AQL calculated successfully")
 
     def copy_aql_classification(self):
         """
@@ -625,7 +646,7 @@ def refresh_aql_logic(doc):
         doc.__class__ = QualityInspection
     
     # Refresh AQL parameters from supplier/customer
-    set_aql_parameters(doc)
+    doc.set_aql_parameters()
     # Calculate sample size & accept/reject limits
     doc.calculate_aql_server()
     # Get classification copied
@@ -634,6 +655,8 @@ def refresh_aql_logic(doc):
     doc._handle_aql_regeneration()     
    
     return doc.as_dict()
+
+
 
 @frappe.whitelist()
 def calculate_aql_status_counts(doc):
@@ -722,9 +745,9 @@ def set_aql_parameters(doc, method=None):
     # --- TRACE 2: Load Reference Document ---  
     try:                                                                    
         ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
-    #    frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
+        # frappe.msgprint(f"DEBUG: Successfully loaded {doc.reference_type}: {doc.reference_name}")
     except Exception as e:                                                  
-    #    frappe.msgprint(f"DEBUG: Error loading reference: {e}")    
+        frappe.msgprint(f"DEBUG: Error loading reference: {e}")    
         return doc.as_dict()                                                
     # --- TRACE 3: Process Supplier Documents ---
     if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  
@@ -764,9 +787,7 @@ def set_aql_parameters(doc, method=None):
 # -------------------------
 @frappe.whitelist()
 def run_calculate_aql_server(name):
-    """
-    Button-triggered AQL calculation
-    """
+    """ Button-triggered AQL calculation -Sample size """
     doc = frappe.get_doc("Quality Inspection", name)
     doc.calculate_aql_server()
     doc.save()

@@ -57,7 +57,10 @@ fixtures = [
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_js = {
-    "Quality Inspection": "public/js/quality_inspection.js"
+    "Quality Inspection": "public/js/quality_inspection.js",
+    "Purchase Invoice": "public/js/purchase_invoice.js",
+    "Purchase Receipt": "public/js/purchase_receipt.js",
+    "Delivery Note": "public/js/delivery_note.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -145,7 +148,13 @@ doctype_js = {
 # Override standard doctype classes
 
 override_doctype_class = {
-    "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection"
+    "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection",
+    "Purchase Invoice": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_invoice.purchase_invoice.PurchaseInvoice",
+    "Purchase Receipt": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.PurchaseReceipt",
+    "Delivery Note": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.delivery_note.delivery_note.DeliveryNote",
+    "Sales Invoice": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.sales_invoice.sales_invoice.Sales Invoice"
+
+
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 }
 
@@ -168,27 +177,9 @@ doc_events = {
     "Item": {
         "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.item.item.set_aql_defaults_from_config"
     },
-    "Purchase Receipt": {
-        "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.copy_aql_from_supplier"
-    },
-    "Purchase Invoice": {
-        "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_invoice.purchase_invoice.copy_aql_from_supplier"
-    },
     "Customer": {
         "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.customer.customer.set_aql_defaults_from_config"
-    },
-    "Sales Invoice": {
-        "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.sales_invoice.sales_invoice.copy_aql_from_customer"
-    },
-    "Delivery Note": {  
-        "before_save": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.delivery_note.delivery_note.copy_aql_from_customer"
     }
-    # "Quality Inspection": {
-    #     "onload": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection"
-    # }
-    # "Quality Inspection Reading": {
-    #     "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection_reading.quality_inspection_reading.copy_aql_classification"
-    # }
 }
 
 # Scheduled Tasks
