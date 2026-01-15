@@ -99,10 +99,25 @@ class QualityInspection(ERPNextQualityInspection):
                 doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
                 doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
                 doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
+        elif doc.reference_type == "Stock Entry":
+            if doc.item_code: 
+                i_master = frappe.get_doc("Item", doc.item_code)
+                doc.custom_aql_party_name = "INTERNAL"
+                doc.custom_aql_party_type = "INTERNAL"
+                doc.custom_aql_inspection_level = i_master.get("custom_aql_inspection_level")
+                doc.custom_aql_critical_scale = i_master.get("custom_aql_critical_scale")
+                doc.custom_aql_major_scale = i_master.get("custom_aql_major_scale")
+                doc.custom_aql_minor_scale = i_master.get("custom_aql_minor_scale")        
 
         # Lot size logic
         if doc.item_code:
-            qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
+            if doc.reference_type == "Stock Entry":
+                qty = 0
+                for i in ref_doc.items:
+                    if i.item_code == doc.item_code:
+                        qty += flt(i.transfer_qty or i.qty)
+            else:        
+                qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
             doc.custom_aql_lot_size = qty
 
         return doc.as_dict()
@@ -774,10 +789,25 @@ def set_aql_parameters(doc, method=None):
             doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
             doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
             doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
+    elif doc.reference_type == "Stock Entry":
+        if doc.item_code: 
+            i_master = frappe.get_doc("Item", doc.item_code)
+            doc.custom_aql_party_name = i_master.company
+            doc.custom_aql_party_type = i_master.stock_entry_type
+            doc.custom_aql_inspection_level = i_master.get("custom_aql_inspection_level")
+            doc.custom_aql_critical_scale = i_master.get("custom_aql_critical_scale")
+            doc.custom_aql_major_scale = i_master.get("custom_aql_major_scale")
+            doc.custom_aql_minor_scale = i_master.get("custom_aql_minor_scale")        
 
     # Lot size logic
     if doc.item_code:
-        qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
+        if doc.reference_type == "Stock Entry":
+            qty = 0
+            for i in ref_doc.items:
+                if i.item_code == doc.item_code:
+                    qty += flt(i.transfer_qty or i.qty)
+        else:        
+            qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
         doc.custom_aql_lot_size = qty
 
     return doc.as_dict()

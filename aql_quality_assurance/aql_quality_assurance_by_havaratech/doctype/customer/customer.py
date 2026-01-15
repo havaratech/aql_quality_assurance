@@ -31,7 +31,7 @@ def set_aql_defaults_from_config(doc, method):
         "AQL Classification Quality Inspection Setting"
     )
 
-    #Validate CONFIG, not Supplier
+    #Validate CONFIG, not Customer
     if (
         not config.aql_inspection_level
         or config.aql_inspection_level == "Select"
