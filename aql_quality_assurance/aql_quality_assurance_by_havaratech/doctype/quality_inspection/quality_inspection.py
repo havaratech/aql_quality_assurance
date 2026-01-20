@@ -6,7 +6,26 @@ from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityI
 from frappe.utils import cint
 
 class QualityInspection(ERPNextQualityInspection):
-        
+
+    def before_submit(self):
+        """ Prevent submission if any reading is not Accepted or Rejected """
+        invalid_rows = []
+
+        for row in self.readings:
+            if row.status not in ("Accepted", "Rejected"):
+                invalid_rows.append(
+                    f"Row {row.idx}: {row.specification} → Status = {row.status or 'Blank'}"
+                )
+
+        if invalid_rows:
+            frappe.throw(
+                "Cannot submit Quality Inspection.<br><br>"
+                "All readings must be <b>Accepted</b> or <b>Rejected</b>.<br><br>"
+                + "<br>".join(invalid_rows),
+                title="Invalid Reading Status"
+            )
+
+
     def validate(self):
         self._capture_user_hold_status()
         super().validate()
@@ -75,6 +94,8 @@ class QualityInspection(ERPNextQualityInspection):
             frappe.msgprint(f"DEBUG: Error loading reference: {e}")    
             return doc.as_dict()                                                
         # --- TRACE 3: Process Supplier Documents ---
+        aql_global_settings = frappe.get_single("AQL Classification Quality Inspection Setting")
+                
         if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  
             # Get the ID from the PR    
             s_id = ref_doc.get("supplier")                                      
@@ -84,10 +105,22 @@ class QualityInspection(ERPNextQualityInspection):
                 # Map values
                 doc.custom_aql_party_name = s_master.supplier_name
                 doc.custom_aql_party_type = s_master.supplier_type
-                doc.custom_aql_inspection_level = s_master.get("custom_aql_inspection_level")
-                doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
-                doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
-                doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
+                if s_master.get("custom_aql_inspection_level") == "Select":
+                    doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
+                else:
+                    doc.custom_aql_inspection_level = s_master.custom_aql_inspection_level    
+                if s_master.get("custom_aql_critical_scale") == "Select":
+                    doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
+                else:
+                    doc.custom_aql_critical_scale = s_master.custom_aql_critical_scale    
+                if s_master.get("custom_aql_major_scale")== "Select":
+                    doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
+                else:
+                    doc.custom_aql_major_scale = s_master.custom_aql_major_scale    
+                if s_master.get("custom_aql_minor_scale") == "Select":
+                    doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
+                else:
+                    doc.custom_aql_minor_scale = s_master.custom_aql_minor_scale             
         # --- TRACE 4: Process Customer Documents ---    
         elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:          
             c_id = ref_doc.get("customer")
@@ -95,19 +128,45 @@ class QualityInspection(ERPNextQualityInspection):
                 c_master = frappe.get_doc("Customer", c_id)
                 doc.custom_aql_party_name = c_master.customer_name
                 doc.custom_aql_party_type = c_master.customer_type
-                doc.custom_aql_inspection_level = c_master.get("custom_aql_inspection_level")
-                doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
-                doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
-                doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
+                if c_master.get("custom_aql_inspection_level") == "Select":
+                    doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
+                else:
+                    doc.custom_aql_inspection_level = c_master.custom_aql_inspection_level    
+                if c_master.get("custom_aql_critical_scale") == "Select":
+                    doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
+                else:
+                    doc.custom_aql_critical_scale = c_master.custom_aql_critical_scale    
+                if c_master.get("custom_aql_major_scale")== "Select":
+                    doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
+                else:
+                    doc.custom_aql_major_scale = c_master.custom_aql_major_scale    
+                if c_master.get("custom_aql_minor_scale") == "Select":
+                    doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
+                else:
+                    doc.custom_aql_minor_scale = c_master.custom_aql_minor_scale
         elif doc.reference_type == "Stock Entry":
             if doc.item_code: 
                 i_master = frappe.get_doc("Item", doc.item_code)
                 doc.custom_aql_party_name = "INTERNAL"
                 doc.custom_aql_party_type = "INTERNAL"
-                doc.custom_aql_inspection_level = i_master.get("custom_aql_inspection_level")
-                doc.custom_aql_critical_scale = i_master.get("custom_aql_critical_scale")
-                doc.custom_aql_major_scale = i_master.get("custom_aql_major_scale")
-                doc.custom_aql_minor_scale = i_master.get("custom_aql_minor_scale")        
+                if i_master.get("custom_aql_inspection_level") == "Select":
+                    doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
+                else:
+                    doc.custom_aql_inspection_level = i_master.custom_aql_inspection_level    
+                if i_master.get("custom_aql_critical_scale") == "Select":
+                    doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
+                else:
+                    doc.custom_aql_critical_scale = i_master.custom_aql_critical_scale    
+                if i_master.get("custom_aql_major_scale")== "Select":
+                    doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
+                else:
+                    doc.custom_aql_major_scale = i_master.custom_aql_major_scale    
+                if i_master.get("custom_aql_minor_scale") == "Select":
+                    doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
+                else:
+                    doc.custom_aql_minor_scale = i_master.custom_aql_minor_scale
+    
+                        
 
         # Lot size logic
         if doc.item_code:
@@ -118,7 +177,7 @@ class QualityInspection(ERPNextQualityInspection):
                         qty += flt(i.transfer_qty or i.qty)
             else:        
                 qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
-            doc.custom_aql_lot_size = qty
+            doc.custom_aql_lot_size = int(qty)
 
         return doc.as_dict()
 
@@ -765,6 +824,8 @@ def set_aql_parameters(doc, method=None):
         frappe.msgprint(f"DEBUG: Error loading reference: {e}")    
         return doc.as_dict()                                                
     # --- TRACE 3: Process Supplier Documents ---
+    aql_global_settings = frappe.get_single("AQL Classification Quality Inspection Setting")
+                
     if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:  
         # Get the ID from the PR    
         s_id = ref_doc.get("supplier")                                      
@@ -774,10 +835,22 @@ def set_aql_parameters(doc, method=None):
             # Map values
             doc.custom_aql_party_name = s_master.supplier_name
             doc.custom_aql_party_type = s_master.supplier_type
-            doc.custom_aql_inspection_level = s_master.get("custom_aql_inspection_level")
-            doc.custom_aql_critical_scale = s_master.get("custom_aql_critical_scale")
-            doc.custom_aql_major_scale = s_master.get("custom_aql_major_scale")
-            doc.custom_aql_minor_scale = s_master.get("custom_aql_minor_scale")             
+            if s_master.get("custom_aql_inspection_level") == "Select":
+                doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
+            else:
+                doc.custom_aql_inspection_level = s_master.custom_aql_inspection_level    
+            if s_master.get("custom_aql_critical_scale") == "Select":
+                doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
+            else:
+                doc.custom_aql_critical_scale = s_master.custom_aql_critical_scale    
+            if s_master.get("custom_aql_major_scale")== "Select":
+                doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
+            else:
+                doc.custom_aql_major_scale = s_master.custom_aql_major_scale    
+            if s_master.get("custom_aql_minor_scale") == "Select":
+                doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
+            else:
+                doc.custom_aql_minor_scale = s_master.custom_aql_minor_scale             
     # --- TRACE 4: Process Customer Documents ---    
     elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:          
         c_id = ref_doc.get("customer")
@@ -785,19 +858,45 @@ def set_aql_parameters(doc, method=None):
             c_master = frappe.get_doc("Customer", c_id)
             doc.custom_aql_party_name = c_master.customer_name
             doc.custom_aql_party_type = c_master.customer_type
-            doc.custom_aql_inspection_level = c_master.get("custom_aql_inspection_level")
-            doc.custom_aql_critical_scale = c_master.get("custom_aql_critical_scale")
-            doc.custom_aql_major_scale = c_master.get("custom_aql_major_scale")
-            doc.custom_aql_minor_scale = c_master.get("custom_aql_minor_scale")
+            if c_master.get("custom_aql_inspection_level") == "Select":
+                doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
+            else:
+                doc.custom_aql_inspection_level = c_master.custom_aql_inspection_level    
+            if c_master.get("custom_aql_critical_scale") == "Select":
+                doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
+            else:
+                doc.custom_aql_critical_scale = c_master.custom_aql_critical_scale    
+            if c_master.get("custom_aql_major_scale")== "Select":
+                doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
+            else:
+                doc.custom_aql_major_scale = c_master.custom_aql_major_scale    
+            if c_master.get("custom_aql_minor_scale") == "Select":
+                doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
+            else:
+                doc.custom_aql_minor_scale = c_master.custom_aql_minor_scale
     elif doc.reference_type == "Stock Entry":
         if doc.item_code: 
             i_master = frappe.get_doc("Item", doc.item_code)
-            doc.custom_aql_party_name = i_master.company
-            doc.custom_aql_party_type = i_master.stock_entry_type
-            doc.custom_aql_inspection_level = i_master.get("custom_aql_inspection_level")
-            doc.custom_aql_critical_scale = i_master.get("custom_aql_critical_scale")
-            doc.custom_aql_major_scale = i_master.get("custom_aql_major_scale")
-            doc.custom_aql_minor_scale = i_master.get("custom_aql_minor_scale")        
+            doc.custom_aql_party_name = "INTERNAL"
+            doc.custom_aql_party_type = "INTERNAL"
+            if i_master.get("custom_aql_inspection_level") == "Select":
+                doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
+            else:
+                doc.custom_aql_inspection_level = i_master.custom_aql_inspection_level    
+            if i_master.get("custom_aql_critical_scale") == "Select":
+                doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
+            else:
+                doc.custom_aql_critical_scale = i_master.custom_aql_critical_scale    
+            if i_master.get("custom_aql_major_scale")== "Select":
+                doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
+            else:
+                doc.custom_aql_major_scale = i_master.custom_aql_major_scale    
+            if i_master.get("custom_aql_minor_scale") == "Select":
+                doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
+            else:
+                doc.custom_aql_minor_scale = i_master.custom_aql_minor_scale
+
+                    
 
     # Lot size logic
     if doc.item_code:
@@ -808,7 +907,7 @@ def set_aql_parameters(doc, method=None):
                     qty += flt(i.transfer_qty or i.qty)
         else:        
             qty = sum([flt(i.qty) for i in ref_doc.get("items") if i.item_code == doc.item_code])
-        doc.custom_aql_lot_size = qty
+        doc.custom_aql_lot_size = int(qty)
 
     return doc.as_dict()
 
