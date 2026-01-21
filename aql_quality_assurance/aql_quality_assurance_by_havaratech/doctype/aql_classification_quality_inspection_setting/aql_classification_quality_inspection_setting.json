@@ -11,8 +11,7 @@
   "aql_critical_scale",
   "aql_major_scale",
   "aql_minor_scale",
-  "column_break_zqtd",
-  "quality_inspection_reading_settings"
+  "column_break_zqtd"
  ],
  "fields": [
   {
@@ -60,20 +59,13 @@
   {
    "fieldname": "column_break_zqtd",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "1",
-   "description": "This Check box enables read-only of reading parameter table except reading input fields.",
-   "fieldname": "quality_inspection_reading_settings",
-   "fieldtype": "Check",
-   "label": "Quality Inspection Reading Settings"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-12 21:22:31.560611",
+ "modified": "2026-01-21 17:33:35.777421",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Classification Quality Inspection Setting",

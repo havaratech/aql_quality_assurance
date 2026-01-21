@@ -26,6 +26,7 @@ class QualityInspection(ERPNextQualityInspection):
             )
 
 
+
     def validate(self):
         self._capture_user_hold_status()
         super().validate()
@@ -71,11 +72,7 @@ class QualityInspection(ERPNextQualityInspection):
         # Override parent status based on AQL results
         self.manual_inspection = 1
         if cint(self.custom_aql_status_override) == 0:
-            self.status = self.custom_aql_status            
-        
-        # Lock readings for non-admin users
-        # self._lock_readings_for_non_admin()
-        # only administrator/system manager can delete 
+            self.status = self.custom_aql_status 
         
     #---------------------------------------------------------------------------------------------------------------------------
 
@@ -103,21 +100,22 @@ class QualityInspection(ERPNextQualityInspection):
             if s_id:                                                            
                 s_master = frappe.get_doc("Supplier", s_id)
                 # Map values
-                doc.custom_aql_party_name = s_master.supplier_name
-                doc.custom_aql_party_type = s_master.supplier_type
-                if s_master.get("custom_aql_inspection_level") == "Select":
+                doc.custom_aql_party_names = s_id       # s_master.supplier_name
+                doc.custom_aql_party_types = "Supplier" # s_master.supplier_type                                
+
+                if s_master.get("custom_aql_inspection_level") not in ['Gen I', 'Gen II', 'Gen III', 'Spl I', 'Spl II', 'Spl III', 'Spl IV']:
                     doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
                 else:
                     doc.custom_aql_inspection_level = s_master.custom_aql_inspection_level    
-                if s_master.get("custom_aql_critical_scale") == "Select":
+                if s_master.get("custom_aql_critical_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
                 else:
                     doc.custom_aql_critical_scale = s_master.custom_aql_critical_scale    
-                if s_master.get("custom_aql_major_scale")== "Select":
+                if s_master.get("custom_aql_major_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
                 else:
                     doc.custom_aql_major_scale = s_master.custom_aql_major_scale    
-                if s_master.get("custom_aql_minor_scale") == "Select":
+                if s_master.get("custom_aql_minor_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
                 else:
                     doc.custom_aql_minor_scale = s_master.custom_aql_minor_scale             
@@ -126,21 +124,22 @@ class QualityInspection(ERPNextQualityInspection):
             c_id = ref_doc.get("customer")
             if c_id:
                 c_master = frappe.get_doc("Customer", c_id)
-                doc.custom_aql_party_name = c_master.customer_name
-                doc.custom_aql_party_type = c_master.customer_type
-                if c_master.get("custom_aql_inspection_level") == "Select":
+                doc.custom_aql_party_names = c_id       # c_master.customer_name
+                doc.custom_aql_party_types = "Customer" # c_master.customer_type
+
+                if c_master.get("custom_aql_inspection_level") not in ['Gen I', 'Gen II', 'Gen III', 'Spl I', 'Spl II', 'Spl III', 'Spl IV']:
                     doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
                 else:
                     doc.custom_aql_inspection_level = c_master.custom_aql_inspection_level    
-                if c_master.get("custom_aql_critical_scale") == "Select":
+                if c_master.get("custom_aql_critical_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
                 else:
                     doc.custom_aql_critical_scale = c_master.custom_aql_critical_scale    
-                if c_master.get("custom_aql_major_scale")== "Select":
+                if c_master.get("custom_aql_major_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
                 else:
                     doc.custom_aql_major_scale = c_master.custom_aql_major_scale    
-                if c_master.get("custom_aql_minor_scale") == "Select":
+                if c_master.get("custom_aql_minor_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
                 else:
                     doc.custom_aql_minor_scale = c_master.custom_aql_minor_scale
@@ -149,19 +148,19 @@ class QualityInspection(ERPNextQualityInspection):
                 i_master = frappe.get_doc("Item", doc.item_code)
                 doc.custom_aql_party_name = "INTERNAL"
                 doc.custom_aql_party_type = "INTERNAL"
-                if i_master.get("custom_aql_inspection_level") == "Select":
+                if i_master.get("custom_aql_inspection_level") not in ['Gen I', 'Gen II', 'Gen III', 'Spl I', 'Spl II', 'Spl III', 'Spl IV']:
                     doc.custom_aql_inspection_level = aql_global_settings.get("aql_inspection_level")
                 else:
                     doc.custom_aql_inspection_level = i_master.custom_aql_inspection_level    
-                if i_master.get("custom_aql_critical_scale") == "Select":
+                if i_master.get("custom_aql_critical_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_critical_scale = aql_global_settings.get("aql_critical_scale")
                 else:
                     doc.custom_aql_critical_scale = i_master.custom_aql_critical_scale    
-                if i_master.get("custom_aql_major_scale")== "Select":
+                if i_master.get("custom_aql_major_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_major_scale = aql_global_settings.get("aql_major_scale")
                 else:
                     doc.custom_aql_major_scale = i_master.custom_aql_major_scale    
-                if i_master.get("custom_aql_minor_scale") == "Select":
+                if i_master.get("custom_aql_minor_scale") not in ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']:
                     doc.custom_aql_minor_scale = aql_global_settings.get("aql_minor_scale")
                 else:
                     doc.custom_aql_minor_scale = i_master.custom_aql_minor_scale
