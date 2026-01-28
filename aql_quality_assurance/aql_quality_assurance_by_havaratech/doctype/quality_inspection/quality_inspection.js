@@ -511,50 +511,187 @@ function enable($el) {
 // END OF READONLY LOGIC BASED ON NUMERIC FLAG
 //---------------------------------------------------------//   
 
+// frappe.ui.form.on("Quality Inspection", {
+//     refresh(frm) {
+
+//         // only for new inspections
+//         if (!frm.is_new()) return;
+
+//         // prevent multiple hooks
+//         if (frm.__aql_hooked) return;
+//         frm.__aql_hooked = true;
+
+//         // hook into the readings grid refresh (fires AFTER template loads rows)
+//         const grid = frm.fields_dict.readings.grid;
+//         const _refresh = grid.refresh;
+
+//         grid.refresh = function () {
+//             _refresh.apply(this, arguments);
+
+//             // when rows appear for the first time
+//             if (frm.doc.readings && frm.doc.readings.length > 0 && !frm.__aql_done) {
+//                 frm.__aql_done = true;
+
+//                 run_aql_after_template(frm);
+//             }
+//         };
+//     }
+// });
+
+// function run_aql_after_template(frm) {
+
+//     console.log("AQL logic triggered AFTER template & readings loaded");
+
+//     frappe.call({
+//         method: "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.refresh_aql_logic",
+//         args: { doc: frm.doc },
+//         callback: function (r) {
+//             if(r.message){
+//                 frm.set_value(r.message);
+//                 frm.refresh_fields();
+//                 frappe.show_alert({ message: __('AQL Logic Populated'), indicator: 'green'});
+//             }
+//         }
+//     });
+// }
+
+
+
+// this is grr
+
 frappe.ui.form.on("Quality Inspection", {
-    refresh(frm) {
-
-        // only for new inspections
+    refresh: function(frm) {
+        // 1. Only run for new documents
         if (!frm.is_new()) return;
+        
+        // 2. Prevent running if already done
+        if (frm.__aql_done) return;
 
-        // prevent multiple hooks
-        if (frm.__aql_hooked) return;
-        frm.__aql_hooked = true;
+        // 3. Show a visual message so you know the script is alive
+        frappe.show_alert({
+            message: __('Waiting for template rows...'),
+            indicator: 'orange'
+        });
 
-        // hook into the readings grid refresh (fires AFTER template loads rows)
-        const grid = frm.fields_dict.readings.grid;
-        const _refresh = grid.refresh;
+        // 4. Start the 5-second "Brute Force" loop
+        let attempts = 0;
+        const max_attempts = 5; // 5 attempts * 1000ms = 5 Seconds
 
-        grid.refresh = function () {
-            _refresh.apply(this, arguments);
+        const interval_id = setInterval(() => {
+            attempts++;
+            console.log(`[AQL Check] Attempt ${attempts}: Checking for readings...`);
 
-            // when rows appear for the first time
-            if (frm.doc.readings && frm.doc.readings.length > 0 && !frm.__aql_done) {
-                frm.__aql_done = true;
-
-                run_aql_after_template(frm);
+            // CHECK: Do we have readings rows yet?
+            if (frm.doc.readings && frm.doc.readings.length > 0) {
+                
+                // FOUND THEM! Stop the timer immediately.
+                clearInterval(interval_id);
+                
+                // Run the logic
+                if (!frm.__aql_done) {
+                    frm.__aql_done = true;
+                    console.log("[AQL Check] Rows found! Running Logic.");
+                    run_aql_force(frm);
+                }
+            } 
+            else if (attempts >= max_attempts) {
+                // TIME'S UP: Stop checking to save memory
+                clearInterval(interval_id);
+                console.log("[AQL Check] Timed out. No rows found.");
             }
-        };
+
+        }, 1000); // Check every 1 second
     }
 });
 
-function run_aql_after_template(frm) {
-
-    console.log("AQL logic triggered AFTER template & readings loaded");
-
+function run_aql_force(frm) {
     frappe.call({
         method: "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.refresh_aql_logic",
         args: { doc: frm.doc },
+        freeze: true,
+        freeze_message: __("Calculating & Populating Values..."),
         callback: function (r) {
-            if(r.message){
-                frm.set_value(r.message);
-                frm.refresh_fields();
-                frappe.show_alert({ message: __('AQL Logic Populated'), indicator: 'green'});
+            if (r.message) {
+                // Use a safe update method to avoid the 'parent' error
+                // We wrap this in a try-catch block just in case
+                try {
+                    // Update the form data
+                    frm.set_value(r.message).then(() => {
+                        frm.refresh_fields();
+                        frappe.show_alert({ message: __('AQL Data Populated!'), indicator: 'green' });
+                    });
+                } catch (e) {
+                    console.error("AQL Population Error:", e);
+                    // Fallback: If set_value fails, force refresh
+                    frappe.model.sync(r.message);
+                    frm.refresh();
+                }
             }
         }
     });
 }
 
+frappe.ui.form.on("Quality Inspection", {
+    refresh(frm) {
+        // Clear any previously set custom indicator
+        frm.page.clear_indicator();
 
+        const status = frm.doc.status;
+        const docstatus = frm.doc.docstatus;
 
-// this is grr
+        // Nothing to show
+        if (!status && docstatus === 0) return;
+
+        let label = null;
+        let color = null;
+
+        // -------------------------------
+        // DRAFT (docstatus = 0)
+        // -------------------------------
+        if (docstatus === 0) {
+            if (status === "Pending") {
+                label = "Draft - Pending";
+                color = "orange";
+            }
+            else if (status === "On Hold") {
+                label = "Draft - On Hold";
+                color = "pink";
+            }
+            else if (status === "Accepted") {
+                label = "Draft - Accepted";
+                color = "green";
+            }
+            else if (status === "Rejected") {
+                label = "Draft - Rejected";
+                color = "red";
+            }
+        }
+
+        // -------------------------------
+        // SUBMITTED (docstatus = 1)
+        // -------------------------------
+        else if (docstatus === 1) {
+            if (status === "Accepted") {
+                label = "Submitted - Accepted";
+                color = "green";
+            }
+            else if (status === "Rejected") {
+                label = "Submitted - Rejected";
+                color = "red";
+            }
+        }
+
+        // -------------------------------
+        // CANCELLED (docstatus = 2)
+        // -------------------------------
+        else if (docstatus === 2) {
+            label = "Cancelled";
+            color = "red";
+        }
+
+        // Add indicator beside Draft / Submitted
+        if (label && color) {
+            frm.page.set_indicator(label, color);
+        }
+    }
+});

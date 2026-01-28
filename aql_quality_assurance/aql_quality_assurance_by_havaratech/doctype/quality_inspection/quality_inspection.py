@@ -3,29 +3,23 @@ from frappe.utils import flt
 import json
 from frappe.model.document import Document
 from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection as ERPNextQualityInspection
-from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection
 from frappe.utils import cint
 
 class QualityInspection(ERPNextQualityInspection):
 
     def before_submit(self):
-
         if cint(self.custom_aql_inspection_skip) == 1:
             self.status = "Accepted"
-            return
-        
+            return        
         if self.status not in ("Accepted", "Rejected"):
-            frappe.throw("Status should be <b>Accepted</b> or <b>Rejected</b>.", title="Invalid Status")
-        
+            frappe.throw("Status should be <b>Accepted</b> or <b>Rejected</b>.", title="Invalid Status")        
         """ Prevent submission if any reading is not Accepted or Rejected """
         invalid_rows = []
-
         for row in self.readings:
             if row.status not in ("Accepted", "Rejected"):
                 invalid_rows.append(
                     f"Row {row.idx}: {row.specification} → Status = {row.status or 'Blank'}"
                 )
-
         if invalid_rows:
             frappe.throw(
                 "Cannot submit Quality Inspection.<br><br>"
@@ -105,16 +99,19 @@ class QualityInspection(ERPNextQualityInspection):
                 party_doc = frappe.get_doc("Supplier", ref_doc.supplier)
                 doc.custom_aql_party_names = ref_doc.supplier
                 doc.custom_aql_party_types = "Supplier"
+                doc.custom_aql_party_type = "Supplier"
 
         elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:
             if ref_doc.get("customer"):
                 party_doc = frappe.get_doc("Customer", ref_doc.customer)
                 doc.custom_aql_party_names = ref_doc.customer
                 doc.custom_aql_party_types = "Customer"
+                doc.custom_aql_party_type = "Customer"
         elif doc.reference_type == "Stock Entry":
             # INTERNAL transaction
             doc.custom_aql_party_names = ref_doc.company
             doc.custom_aql_party_types = "Company"
+            doc.custom_aql_party_type = "Company"
             party_doc = None   # explicitly no party source        
                 
 
