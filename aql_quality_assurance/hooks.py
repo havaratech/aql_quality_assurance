@@ -182,6 +182,15 @@ override_doctype_class = {
 #         "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.customer.customer.set_aql_defaults_from_config"
 #     }
 # }
+scheduler_events = {
+    "cron": {
+        "*/2 * * * *": [
+            "aql_quality_assurance.aql_quality_assurance_by_havaratech.scheduler.supplier_aql_performance_report_scheduler.run_supplier_aql_scheduler"
+        ]
+    }
+}
+
+
 
 # Scheduled Tasks
 # ---------------

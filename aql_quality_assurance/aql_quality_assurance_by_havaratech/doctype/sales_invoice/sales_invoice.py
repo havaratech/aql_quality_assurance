@@ -121,7 +121,7 @@ class SalesInvoice(ERPNextSalesInvoice):
 # ============================================================
 
 @frappe.whitelist()
-def fetch_aql_from_supplier(customer, item_code=None):
+def fetch_aql_from_customer(customer, item_code=None):
     """
     Field-wise resolution:
     Customer → Item → Global

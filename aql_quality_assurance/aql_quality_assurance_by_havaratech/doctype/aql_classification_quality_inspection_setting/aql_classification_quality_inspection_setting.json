@@ -12,7 +12,16 @@
   "aql_major_scale",
   "aql_minor_scale",
   "column_break_zqtd",
-  "quality_inspection_reading_settings"
+  "quality_inspection_reading_settings",
+  "supplier_performance_setting_tab",
+  "aql_inspection_level_automation_configuration_section",
+  "supplier_min_threshold",
+  "column_break_ewuz",
+  "supplier_max_threshold",
+  "inspection_performance_timeline_section",
+  "inspection_start_from",
+  "column_break_zyhz",
+  "inspection_end_to"
  ],
  "fields": [
   {
@@ -67,13 +76,58 @@
    "fieldname": "quality_inspection_reading_settings",
    "fieldtype": "Check",
    "label": "Quality Inspection Reading Settings"
+  },
+  {
+   "fieldname": "aql_inspection_level_automation_configuration_section",
+   "fieldtype": "Section Break",
+   "label": "AQL Inspection Level Automation Configuration"
+  },
+  {
+   "description": "Supplier's Minimum Rejection Threshold (if less, upgrade to Gen I) less sample size",
+   "fieldname": "supplier_min_threshold",
+   "fieldtype": "Float",
+   "label": "Supplier Min Threshold"
+  },
+  {
+   "description": "Supplier's Maximum Rejection Threshold (if more, downgrade to Gen III) more sample size",
+   "fieldname": "supplier_max_threshold",
+   "fieldtype": "Float",
+   "label": "Supplier Max Threshold"
+  },
+  {
+   "fieldname": "column_break_ewuz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inspection_performance_timeline_section",
+   "fieldtype": "Section Break",
+   "label": "Inspection Performance Timeline"
+  },
+  {
+   "fieldname": "inspection_start_from",
+   "fieldtype": "Date",
+   "label": "Inspection Start From"
+  },
+  {
+   "fieldname": "column_break_zyhz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inspection_end_to",
+   "fieldtype": "Date",
+   "label": "Inspection End To"
+  },
+  {
+   "fieldname": "supplier_performance_setting_tab",
+   "fieldtype": "Tab Break",
+   "label": "Supplier Performance Setting"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-01-22 11:11:24.762239",
+ "modified": "2026-02-02 17:07:20.241473",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Classification Quality Inspection Setting",

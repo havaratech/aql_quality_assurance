@@ -1,0 +1,276 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "format:{SPR}-{aql_party_names}-{#####}-{DD}-{MM}-{YYYY}",
+ "creation": "2026-02-01 14:05:29.754478",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "core_identity_traceability_section",
+  "company",
+  "column_break_zfcu",
+  "aql_party_names",
+  "column_break_zhdq",
+  "item_code",
+  "column_break_ccfx",
+  "reference_type",
+  "inspection_performance_timeline_section",
+  "inspection_start_from",
+  "column_break_ikva",
+  "inspection_end_to",
+  "inspection_metrics_section",
+  "total_quality_inspection",
+  "column_break_undz",
+  "accepted_inspection",
+  "column_break_pftq",
+  "rejected_inspection",
+  "column_break_pilh",
+  "pending_inspection",
+  "derived_percentage_section",
+  "acceptance_percentage",
+  "column_break_qaat",
+  "rejection_percentage",
+  "aql_classification_control_section",
+  "current_aql_level",
+  "column_break_ocyy",
+  "previous_aql_level",
+  "column_break_ccsv",
+  "last_decision",
+  "column_break_fskq",
+  "last_decision_on",
+  "section_break_wpwd",
+  "decision_reason",
+  "threshold_snapshot_section",
+  "reject_min_pct_used",
+  "column_break_mtpt",
+  "reject_max_pct_used",
+  "drill_down_helper_section",
+  "last_quality_inspection"
+ ],
+ "fields": [
+  {
+   "fieldname": "reference_type",
+   "fieldtype": "Select",
+   "label": "Reference Type",
+   "options": "Supplier\nCustomer\nItem"
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "core_identity_traceability_section",
+   "fieldtype": "Section Break",
+   "label": "Core Identity Traceability"
+  },
+  {
+   "fieldname": "inspection_metrics_section",
+   "fieldtype": "Section Break",
+   "label": "Inspection Metrics"
+  },
+  {
+   "fieldname": "total_quality_inspection",
+   "fieldtype": "Int",
+   "label": "Total Quality Inspection"
+  },
+  {
+   "fieldname": "accepted_inspection",
+   "fieldtype": "Int",
+   "label": "Accepted Inspection"
+  },
+  {
+   "fieldname": "rejected_inspection",
+   "fieldtype": "Int",
+   "label": "Rejected Inspection"
+  },
+  {
+   "fieldname": "pending_inspection",
+   "fieldtype": "Int",
+   "label": "Pending Inspection"
+  },
+  {
+   "fieldname": "derived_percentage_section",
+   "fieldtype": "Section Break",
+   "label": "Derived Percentage"
+  },
+  {
+   "fieldname": "acceptance_percentage",
+   "fieldtype": "Percent",
+   "label": "Acceptance Percentage"
+  },
+  {
+   "fieldname": "rejection_percentage",
+   "fieldtype": "Percent",
+   "label": "Rejection Percentage"
+  },
+  {
+   "fieldname": "aql_classification_control_section",
+   "fieldtype": "Section Break",
+   "label": "AQL Classification Control"
+  },
+  {
+   "fieldname": "current_aql_level",
+   "fieldtype": "Select",
+   "label": "Current AQL Level",
+   "options": "Gen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III\nSpl IV"
+  },
+  {
+   "fieldname": "previous_aql_level",
+   "fieldtype": "Select",
+   "label": "Previous AQL Level",
+   "options": "Gen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III\nSpl IV"
+  },
+  {
+   "fieldname": "last_decision",
+   "fieldtype": "Select",
+   "label": "Last Decision",
+   "options": "Upgraded\nDowngraded\nNo Change"
+  },
+  {
+   "fieldname": "last_decision_on",
+   "fieldtype": "Datetime",
+   "label": "Last Decision On"
+  },
+  {
+   "fieldname": "decision_reason",
+   "fieldtype": "Small Text",
+   "label": "Decision Reason"
+  },
+  {
+   "fieldname": "threshold_snapshot_section",
+   "fieldtype": "Section Break",
+   "label": "Threshold Snapshot"
+  },
+  {
+   "fieldname": "reject_min_pct_used",
+   "fieldtype": "Percent",
+   "label": "Reject Min Pct Used"
+  },
+  {
+   "fieldname": "reject_max_pct_used",
+   "fieldtype": "Percent",
+   "label": "Reject Max Pct Used"
+  },
+  {
+   "fieldname": "drill_down_helper_section",
+   "fieldtype": "Section Break",
+   "label": "Drill Down Helper"
+  },
+  {
+   "fieldname": "last_quality_inspection",
+   "fieldtype": "Link",
+   "label": "Last Quality Inspection",
+   "options": "Quality Inspection"
+  },
+  {
+   "fieldname": "column_break_zfcu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_zhdq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ccfx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_undz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_pftq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_pilh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_qaat",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ocyy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ccsv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_fskq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_wpwd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_mtpt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "aql_party_names",
+   "fieldtype": "Dynamic Link",
+   "label": "AQL Party Names",
+   "options": "reference_type"
+  },
+  {
+   "fieldname": "inspection_performance_timeline_section",
+   "fieldtype": "Section Break",
+   "label": "Inspection Performance Timeline"
+  },
+  {
+   "fieldname": "inspection_start_from",
+   "fieldtype": "Date",
+   "label": "Inspection Start From"
+  },
+  {
+   "fieldname": "column_break_ikva",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "inspection_end_to",
+   "fieldtype": "Date",
+   "label": "Inspection End To"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-02-02 16:32:17.724613",
+ "modified_by": "Administrator",
+ "module": "AQL Quality Assurance By HavaraTech",
+ "name": "Supplier AQL Performance Report",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
