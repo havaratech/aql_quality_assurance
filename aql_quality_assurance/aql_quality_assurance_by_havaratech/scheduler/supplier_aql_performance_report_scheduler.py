@@ -25,7 +25,6 @@ def _release_db_lock(lock_name):
 def run_supplier_aql_scheduler():
     """
     Cron-safe Supplier AQL Scheduler
-    (DB advisory lock based – fully compatible)
     """
 
     if frappe.flags.in_test:
@@ -35,29 +34,17 @@ def run_supplier_aql_scheduler():
     lock_name = f"supplier_aql_scheduler::{site}"
     start_ts = now()
 
-    # ---------------------------------------
-    # Acquire DB lock
-    # ---------------------------------------
     if not _acquire_db_lock(lock_name):
         frappe.logger("aql").warning(
             "Supplier AQL Scheduler skipped (already running)"
         )
         return
 
-    # ---------------------------------------
-    # HEARTBEAT (COMPATIBLE)
-    # ---------------------------------------
-    frappe.log_error(
-        title="Supplier AQL Scheduler Heartbeat",
-        message=f"Executed at {start_ts}"
+    frappe.logger("aql").info(
+        f"Supplier AQL Scheduler STARTED at {start_ts}"
     )
 
-    frappe.logger("aql").info("Supplier AQL Scheduler STARTED")
-
     try:
-        # --------------------------------
-        # Load configuration
-        # --------------------------------
         config = frappe.get_single(
             "AQL Classification Quality Inspection Setting"
         )
@@ -68,6 +55,12 @@ def run_supplier_aql_scheduler():
             )
             return
 
+        if config.supplier_min_threshold >= config.supplier_max_threshold:
+            frappe.logger("aql").error(
+                "Invalid AQL thresholds: min >= max"
+            )
+            return
+
         start_date = getdate(config.inspection_start_from)
         end_date = (
             getdate(config.inspection_end_to)
@@ -75,15 +68,12 @@ def run_supplier_aql_scheduler():
             else getdate(today())
         )
 
-        # --------------------------------
-        # Fetch suppliers
-        # --------------------------------
         suppliers = frappe.db.sql("""
             SELECT DISTINCT custom_aql_party_names
             FROM `tabQuality Inspection`
             WHERE
                 docstatus = 1
-                AND custom_aql_party_type = 'Supplier'
+                AND custom_aql_party_types = 'Supplier'
                 AND report_date BETWEEN %s AND %s
         """, (start_date, end_date), as_list=True)
 
@@ -91,9 +81,6 @@ def run_supplier_aql_scheduler():
             f"Supplier AQL Scheduler found {len(suppliers)} suppliers"
         )
 
-        # --------------------------------
-        # Process suppliers
-        # --------------------------------
         for (supplier,) in suppliers:
             if not supplier:
                 continue
@@ -112,6 +99,8 @@ def run_supplier_aql_scheduler():
                 min_threshold=config.supplier_min_threshold,
                 max_threshold=config.supplier_max_threshold
             )
+
+            frappe.db.commit()
 
         frappe.logger("aql").info("Supplier AQL Scheduler FINISHED")
 

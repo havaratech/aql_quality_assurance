@@ -66,7 +66,7 @@ def process_supplier_aql(
     )
 
     # ---------------------------------------
-    # TREND-AWARE, REGIME-SAFE DECISION
+    # DECISION ENGINE
     # ---------------------------------------
     current_level, raw_decision = decide_aql_with_trend(
         prev_level=previous_level,
@@ -76,7 +76,6 @@ def process_supplier_aql(
         max_threshold=max_threshold
     )
 
-    # Normalize decision for DocType Select
     normalized_decision = normalize_decision(raw_decision)
 
     # ---------------------------------------
@@ -112,7 +111,7 @@ def process_supplier_aql(
         "rejection_percentage": rejection_pct,
         "previous_aql_level": previous_level,
         "current_aql_level": current_level,
-        "last_decision": normalized_decision,   # ✅ SAFE
+        "last_decision": normalized_decision,
         "last_decision_on": now(),
         "reject_min_pct_used": min_threshold,
         "reject_max_pct_used": max_threshold,
@@ -144,7 +143,7 @@ def process_supplier_aql(
 
 
 # =================================================
-# DECISION ENGINE (REGIME-SAFE)
+# DECISION ENGINE (FINAL)
 # =================================================
 
 def decide_aql_with_trend(
@@ -155,7 +154,8 @@ def decide_aql_with_trend(
     max_threshold
 ):
     """
-    Regime-safe, trend-aware AQL decision logic.
+    Family-locked, symmetric, regime-safe AQL logic.
+    Works identically for Gen and Spl. No crossover.
     """
 
     if prev_level not in AQL_ORDER:
@@ -163,42 +163,48 @@ def decide_aql_with_trend(
 
     idx = AQL_ORDER.index(prev_level)
 
+    is_gen = prev_level.startswith("Gen")
+    is_spl = prev_level.startswith("Spl")
+
+    if is_gen:
+        family_min = AQL_ORDER.index("Gen I")
+        family_max = AQL_ORDER.index("Gen III")
+    else:
+        family_min = AQL_ORDER.index("Spl I")
+        family_max = AQL_ORDER.index("Spl IV")
+
+    # -------------------------
+    # WORST LEVEL LOCK
+    # -------------------------
+    if idx == family_max:
+        if current_rejection_pct <= max_threshold:
+            return AQL_ORDER[idx - 1], "Upgraded"
+        return prev_level, "Hold (Worst Level)"
+
     # -------------------------
     # GOOD QUALITY
     # -------------------------
     if current_rejection_pct <= min_threshold:
-        if is_gen(prev_level) and prev_level != "Gen I":
+        if idx > family_min:
             return AQL_ORDER[idx - 1], "Upgraded"
-        if is_spl(prev_level) and prev_level != "Spl I":
-            return AQL_ORDER[idx - 1], "Upgraded"
-        return prev_level, "Hold (Regime Floor)"
+        return prev_level, "Hold (Best Level)"
 
     # -------------------------
-    # BORDERLINE QUALITY
+    # ACCEPTABLE BAND
     # -------------------------
     if min_threshold < current_rejection_pct <= max_threshold:
         return prev_level, "No Change"
 
     # -------------------------
-    # BAD QUALITY (> max)
+    # BAD QUALITY
     # -------------------------
     if current_rejection_pct > max_threshold:
-
-        # Improving trend → HOLD
         if (
             prev_rejection_pct is not None
             and current_rejection_pct < prev_rejection_pct
         ):
             return prev_level, "Hold (Improving)"
-
-        # Worsening trend → degrade WITHIN regime only
-        if is_gen(prev_level):
-            if prev_level == "Gen III":
-                return prev_level, "Hold (Gen Regime Limit)"
-            return AQL_ORDER[idx + 1], "Downgraded"
-
-        if is_spl(prev_level):
-            return AQL_ORDER[min(idx + 1, len(AQL_ORDER) - 1)], "Downgraded"
+        return AQL_ORDER[idx + 1], "Downgraded"
 
     return prev_level, "No Change"
 
@@ -208,18 +214,12 @@ def decide_aql_with_trend(
 # =================================================
 
 def normalize_decision(raw_decision):
-    """
-    Normalize decision to DocType-safe Select values.
-    """
     if raw_decision in ("Upgraded", "Downgraded"):
         return raw_decision
     return "No Change"
 
 
 def get_previous_aql_snapshot(supplier):
-    """
-    Fetch last AQL level + rejection % for trend comparison.
-    """
     return frappe.db.get_value(
         "Supplier AQL Performance Report",
         {"aql_party_names": supplier},
@@ -258,10 +258,6 @@ def update_supplier_master_aql_level(
     current_level,
     decision
 ):
-    """
-    Update Supplier master AQL level only if level changed.
-    """
-
     if previous_level == current_level:
         return
 

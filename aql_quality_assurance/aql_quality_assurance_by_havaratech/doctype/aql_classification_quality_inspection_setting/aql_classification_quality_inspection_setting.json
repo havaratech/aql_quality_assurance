@@ -18,10 +18,14 @@
   "supplier_min_threshold",
   "column_break_ewuz",
   "supplier_max_threshold",
-  "inspection_performance_timeline_section",
+  "inspection_performance_batch_timeline_section",
   "inspection_start_from",
   "column_break_zyhz",
-  "inspection_end_to"
+  "inspection_end_to",
+  "quality_inspection_performance_dashboard_timeline_section",
+  "dashboard_from_date",
+  "column_break_pfcv",
+  "dashboard_to_date"
  ],
  "fields": [
   {
@@ -99,11 +103,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "inspection_performance_timeline_section",
-   "fieldtype": "Section Break",
-   "label": "Inspection Performance Timeline"
-  },
-  {
    "fieldname": "inspection_start_from",
    "fieldtype": "Date",
    "label": "Inspection Start From"
@@ -121,13 +120,39 @@
    "fieldname": "supplier_performance_setting_tab",
    "fieldtype": "Tab Break",
    "label": "Supplier Performance Setting"
+  },
+  {
+   "description": "Date setting for Dashboard Visualization",
+   "fieldname": "quality_inspection_performance_dashboard_timeline_section",
+   "fieldtype": "Section Break",
+   "label": "Quality Inspection Performance Dashboard Timeline"
+  },
+  {
+   "fieldname": "column_break_pfcv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dashboard_from_date",
+   "fieldtype": "Date",
+   "label": "Dashboard From Date"
+  },
+  {
+   "fieldname": "dashboard_to_date",
+   "fieldtype": "Date",
+   "label": "Dashboard To Date"
+  },
+  {
+   "description": "Date settings for Batch Execution for Auto Inspection leveling.",
+   "fieldname": "inspection_performance_batch_timeline_section",
+   "fieldtype": "Section Break",
+   "label": "Inspection Performance Batch Timeline"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-02-02 17:07:20.241473",
+ "modified": "2026-02-03 19:53:32.851797",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Classification Quality Inspection Setting",
