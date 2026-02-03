@@ -5,52 +5,58 @@ from aql_quality_assurance.aql_quality_assurance_by_havaratech.services.supplier
     process_supplier_aql
 )
 
-# ---------------------------------------
-# Scheduler Lock Configuration
-# ---------------------------------------
-LOCK_TTL = 6 * 60  # 6 minutes
+LOCK_TIMEOUT = 0  # do not wait
+
+
+def _acquire_db_lock(lock_name):
+    return frappe.db.sql(
+        "SELECT GET_LOCK(%s, %s)",
+        (lock_name, LOCK_TIMEOUT),
+    )[0][0] == 1
+
+
+def _release_db_lock(lock_name):
+    try:
+        frappe.db.sql("SELECT RELEASE_LOCK(%s)", (lock_name,))
+    except Exception:
+        pass
 
 
 def run_supplier_aql_scheduler():
     """
-    Cron-safe Supplier AQL Scheduler.
-
-    - Runs every 5 minutes
-    - Redis lock protected (no parallel execution)
-    - Idempotent (UPSERT logic)
+    Cron-safe Supplier AQL Scheduler
+    (DB advisory lock based – fully compatible)
     """
 
     if frappe.flags.in_test:
         return
 
     site = frappe.local.site
-    cache = frappe.cache()
-
-    lock_key = f"supplier_aql_scheduler_running::{site}"
+    lock_name = f"supplier_aql_scheduler::{site}"
     start_ts = now()
 
     # ---------------------------------------
-    # Atomic Redis lock (no race condition)
+    # Acquire DB lock
     # ---------------------------------------
-    if not cache.add_value(lock_key, start_ts, expires_in_sec=LOCK_TTL):
+    if not _acquire_db_lock(lock_name):
         frappe.logger("aql").warning(
             "Supplier AQL Scheduler skipped (already running)"
         )
         return
 
     # ---------------------------------------
-    # HEARTBEAT (only if lock acquired)
+    # HEARTBEAT (COMPATIBLE)
     # ---------------------------------------
     frappe.log_error(
-        message=f"Supplier AQL Scheduler executed at {start_ts}",
-        method="supplier_aql_scheduler_heartbeat"
+        title="Supplier AQL Scheduler Heartbeat",
+        message=f"Executed at {start_ts}"
     )
 
     frappe.logger("aql").info("Supplier AQL Scheduler STARTED")
 
     try:
         # --------------------------------
-        # Load global configuration
+        # Load configuration
         # --------------------------------
         config = frappe.get_single(
             "AQL Classification Quality Inspection Setting"
@@ -70,7 +76,7 @@ def run_supplier_aql_scheduler():
         )
 
         # --------------------------------
-        # Fetch suppliers with submitted QI
+        # Fetch suppliers
         # --------------------------------
         suppliers = frappe.db.sql("""
             SELECT DISTINCT custom_aql_party_names
@@ -92,15 +98,11 @@ def run_supplier_aql_scheduler():
             if not supplier:
                 continue
 
-            # Supplier-level override
             if frappe.db.get_value(
                 "Supplier",
                 supplier,
                 "custom_aql_logic_override"
             ):
-                frappe.logger("aql").info(
-                    f"Supplier {supplier} skipped (override enabled)"
-                )
                 continue
 
             process_supplier_aql(
@@ -121,11 +123,7 @@ def run_supplier_aql_scheduler():
         raise
 
     finally:
-        # --------------------------------
-        # Always release lock
-        # --------------------------------
-        cache.delete_value(lock_key)
-
+        _release_db_lock(lock_name)
         frappe.logger("aql").info(
-            f"Supplier AQL Scheduler completed in {now()}"
+            f"Supplier AQL Scheduler completed at {now()}"
         )

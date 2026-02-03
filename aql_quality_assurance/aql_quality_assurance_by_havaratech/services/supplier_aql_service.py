@@ -68,13 +68,16 @@ def process_supplier_aql(
     # ---------------------------------------
     # TREND-AWARE, REGIME-SAFE DECISION
     # ---------------------------------------
-    current_level, decision = decide_aql_with_trend(
+    current_level, raw_decision = decide_aql_with_trend(
         prev_level=previous_level,
         prev_rejection_pct=previous_rejection_pct,
         current_rejection_pct=rejection_pct,
         min_threshold=min_threshold,
         max_threshold=max_threshold
     )
+
+    # Normalize decision for DocType Select
+    normalized_decision = normalize_decision(raw_decision)
 
     # ---------------------------------------
     # Update Supplier Master
@@ -83,7 +86,7 @@ def process_supplier_aql(
         supplier=supplier,
         previous_level=previous_level,
         current_level=current_level,
-        decision=decision
+        decision=normalized_decision
     )
 
     # ---------------------------------------
@@ -109,7 +112,7 @@ def process_supplier_aql(
         "rejection_percentage": rejection_pct,
         "previous_aql_level": previous_level,
         "current_aql_level": current_level,
-        "last_decision": decision,
+        "last_decision": normalized_decision,   # ✅ SAFE
         "last_decision_on": now(),
         "reject_min_pct_used": min_threshold,
         "reject_max_pct_used": max_threshold,
@@ -120,7 +123,7 @@ def process_supplier_aql(
             rejected=result.rejected,
             prev_pct=previous_rejection_pct,
             curr_pct=rejection_pct,
-            decision=decision
+            raw_decision=raw_decision
         ),
     }
 
@@ -204,6 +207,15 @@ def decide_aql_with_trend(
 # HELPERS
 # =================================================
 
+def normalize_decision(raw_decision):
+    """
+    Normalize decision to DocType-safe Select values.
+    """
+    if raw_decision in ("Upgraded", "Downgraded"):
+        return raw_decision
+    return "No Change"
+
+
 def get_previous_aql_snapshot(supplier):
     """
     Fetch last AQL level + rejection % for trend comparison.
@@ -224,7 +236,7 @@ def build_decision_reason(
     rejected,
     prev_pct,
     curr_pct,
-    decision
+    raw_decision
 ):
     trend = (
         "improving" if prev_pct is not None and curr_pct < prev_pct
@@ -236,7 +248,7 @@ def build_decision_reason(
         f"Supplier {supplier} | Total: {total}, "
         f"Accepted: {accepted}, Rejected: {rejected}. "
         f"Rejection % changed from {prev_pct}% to {curr_pct}%. "
-        f"Trend: {trend}. Decision: {decision}."
+        f"Trend: {trend}. Decision Logic: {raw_decision}."
     )
 
 
