@@ -5,7 +5,7 @@ import frappe
 
 def execute(filters=None):
     # ---------------------------------------------
-    # Read global dashboard date range (Single DocType)
+    # Read dashboard date range
     # ---------------------------------------------
     settings = frappe.get_single("AQL Classification Quality Inspection Setting")
 
@@ -21,7 +21,7 @@ def execute(filters=None):
         params["to_date"] = settings.dashboard_to_date
 
     # ---------------------------------------------
-    # Month-wise trend calculation
+    # Month-wise aggregation
     # ---------------------------------------------
     data = frappe.db.sql(f"""
         SELECT
@@ -40,6 +40,20 @@ def execute(filters=None):
     """, params, as_dict=True)
 
     # ---------------------------------------------
+    # Moving average (stock-style smoothing)
+    # ---------------------------------------------
+    def moving_average(values, window=3):
+        result = []
+        for i in range(len(values)):
+            subset = values[max(0, i - window + 1): i + 1]
+            result.append(round(sum(subset) / len(subset), 2))
+        return result
+
+    accepted_vals = [round(d.accepted_pct, 2) for d in data]
+    rejected_vals = [round(d.rejected_pct, 2) for d in data]
+    accepted_ma = moving_average(accepted_vals)
+
+    # ---------------------------------------------
     # Columns
     # ---------------------------------------------
     columns = [
@@ -49,7 +63,7 @@ def execute(filters=None):
     ]
 
     # ---------------------------------------------
-    # Line chart with semantic colors
+    # Stock-market style line chart
     # ---------------------------------------------
     chart = {
         "data": {
@@ -57,20 +71,28 @@ def execute(filters=None):
             "datasets": [
                 {
                     "name": "Accepted %",
-                    "values": [round(d.accepted_pct, 2) for d in data],
+                    "values": accepted_vals,
+                },
+                {
+                    "name": "Accepted % (Trend)",
+                    "values": accepted_ma,
                 },
                 {
                     "name": "Rejected %",
-                    "values": [round(d.rejected_pct, 2) for d in data],
-                }
-            ]
+                    "values": rejected_vals,
+                },
+            ],
         },
         "type": "line",
         "colors": [
-            "#27ae60",  # Accepted – Dark Green
-            "#c0392b",  # Rejected – Dark Red
-        ]
+            "#2ecc71",  # Accepted – main price line
+            "#1abc9c",  # Moving average – smooth trend
+            "#e74c3c",  # Rejected – risk signal
+        ],
+        "lineOptions": {
+            "hideDots": 1,      # 🔑 no markers
+            "regionFill": 0,    # 🔑 no area fill
+        },
     }
 
     return columns, data, None, chart
-

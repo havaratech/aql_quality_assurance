@@ -62,7 +62,7 @@ def execute(filters=None):
     data.sort(
         key=lambda x: (-x["accepted_pct"], x["rejected_pct"], -x["total_qi"])
     )
-    data = data[:50]
+    data = data[:1000]
 
     # -------------------------------------------------
     # Columns

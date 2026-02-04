@@ -31,7 +31,7 @@ def execute(filters=None):
             SUM(status = 'Pending') AS pending,
             SUM(status = 'On Hold') AS on_hold
         FROM `tabQuality Inspection`
-        WHERE docstatus = 1
+        WHERE docstatus != 2
         {conditions}
     """, params, as_dict=True)[0]
 

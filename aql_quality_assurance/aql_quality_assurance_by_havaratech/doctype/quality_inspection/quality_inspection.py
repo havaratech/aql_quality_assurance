@@ -168,11 +168,9 @@ class QualityInspection(ERPNextQualityInspection):
 
         return doc.as_dict()
 
-
-    ##***************************************************************************************************************************
-    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     # 1️⃣ OPTIONAL PARAMETER LOGIC
-    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     def _apply_optional_parameter_logic(self):
         """ If optional_parameter is enabled and no reading is provided, force status = Accepted """
         for row in self.readings:
@@ -198,9 +196,9 @@ class QualityInspection(ERPNextQualityInspection):
 
     from frappe.utils import cint   
     
-    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     # 2️⃣ DERIVE CUSTOM AQL STATUS
-    # ---------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     def _row_has_input(self, row):
     # Non-numeric
@@ -233,9 +231,9 @@ class QualityInspection(ERPNextQualityInspection):
                 row.status = self._hold_map[row.name]
 
 
-    ##***************************************************************************************************************************
-    # This logic is working fine
-    # ***************************************************************************************************************
+    # ***********************************************************************************************************************************************************************
+    # CALCULATE AQL STATUS COUNTS
+    # ***********************************************************************************************************************************************************************   
     def calculate_aql_status_counts(self):
         """ Count rejected readings by classification and update actual result fields """
 
@@ -496,7 +494,6 @@ class QualityInspection(ERPNextQualityInspection):
                     "numeric",
                     "min_value",
                     "max_value",
-                   # "manual_inspection",
                     "formula_based_criteria"
                 ]
                 for field in protected_fields:
@@ -512,23 +509,6 @@ class QualityInspection(ERPNextQualityInspection):
             "AQL Classification Quality Inspection Setting",
             "quality_inspection_reading_settings"
         ) == 1
-
-    # def _is_restricted_reading_mode(self):
-    #     doctype = "AQL Classification Quality Inspection Setting"
-    #     fieldname = "quality_inspection_reading_settings"
-
-    #     # 1️⃣ Ensure DocType exists
-    #     if not frappe.db.exists("DocType", doctype):
-    #         return False
-
-    #     # 2️⃣ Ensure column exists (critical after delete/recreate)
-    #     if not frappe.db.has_column(doctype, fieldname):
-    #         return False
-
-    #     value = frappe.db.get_single_value(doctype, fieldname)
-
-    #     return bool(value)
-
 
     def _apply_reading_field_restrictions(self):
         """
@@ -551,15 +531,12 @@ class QualityInspection(ERPNextQualityInspection):
                 else:
                     row.set(f"{fname}_read_only", 1)
 
-# -------------------------
-# SERVER-SIDE HELPER FUNCTIONS
-# -------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# AQL CALCULATION HELPERS - SERVER-SIDE HELPER FUNCTIONS
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def normalize_inspection_level(level):
-    """
-    Convert ERPNext values to ANSI lookup code:
-    Gen I -> I, Gen II -> II, Spl III -> S3, etc.
-    """
+    """ Convert ERPNext values to ANSI lookup code: Gen I -> I, Gen II -> II, Spl III -> S3, etc. """
     level = level.strip()
 
     if level.startswith("Gen"):
@@ -574,9 +551,7 @@ def normalize_inspection_level(level):
 
 
 def normalize_lot_size(qty):
-    """
-    Round lot size to nearest ANSI range
-    """
+    """ Round lot size to nearest ANSI range """
     qty = int(qty)
     if qty <= 8: return 8
     if qty <= 15: return 15
@@ -595,9 +570,9 @@ def normalize_lot_size(qty):
     return 500001
 
 
-# -------------------------
-# AQL LETTER TABLES
-# -------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# SAMPLE SIZE CALCULATION - AQL LETTER TABLES
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 AQLLetters = {
     # General levels
@@ -659,9 +634,9 @@ AQLSampleSize = {
     "R0.065": (2000,3,4),"R0.10": (2000,5,6),"R0.15": (2000,7,8),"R0.25": (2000,10,11),"R0.40": (2000,14,15),"R0.65": (2000,21,22),"R1.0": (1250,21,22),"R1.5": (800,21,22),"R2.5": (500,21,22),"R4.0": (315,21,22),"R6.5": (200,21,22)
 }
 
-# -------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 # CALCULATION LOGIC
-# -------------------------
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def calculate_sample_size(lot, level_code):
     """
@@ -816,7 +791,7 @@ def run_copy_aql_classification(doc):
 
 @frappe.whitelist()
 def set_aql_parameters(doc):
-    # ---------------- BASIC SAFETY ----------------
+    # ---------------- BASIC SAFETY -----------------------------------------------------------------------------------------------------------------------
     if isinstance(doc, str):
         doc = frappe.get_doc(json.loads(doc))
 
@@ -830,7 +805,7 @@ def set_aql_parameters(doc):
     VALID_LEVELS = ['Gen I', 'Gen II', 'Gen III', 'Spl I', 'Spl II', 'Spl III', 'Spl IV']
     VALID_SCALES = ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']
 
-    # ---------------- PARTY SOURCE ----------------
+    # ---------------- PARTY SOURCE -------------------------------------------------------------------------------------------------------------------------
     party_doc = None
 
     if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:
@@ -850,10 +825,10 @@ def set_aql_parameters(doc):
         doc.custom_aql_party_types = "Company"
         party_doc = None   # explicitly no party source        
 
-    # ---------------- ITEM SOURCE ----------------
+    # ---------------- ITEM SOURCE ---------------------------------------------------------------------------------------------------------------------------
     item_doc = frappe.get_doc("Item", doc.item_code) if doc.item_code else None
 
-    # ---------------- FIELD-WISE RESOLUTION ----------------
+    # ---------------- FIELD-WISE RESOLUTION ------------------------------------------------------------------------------------------------------------------
     def resolve(field, valid_values, global_value):
         if party_doc and party_doc.get(field) in valid_values:
             return party_doc.get(field)
@@ -885,7 +860,7 @@ def set_aql_parameters(doc):
         aql_global.aql_minor_scale
     )
 
-    # ---------------- LOT SIZE ----------------
+    # ---------------- LOT SIZE ---------------------------------------------------------------------------------------------------------------------------------
     if doc.item_code:
         if doc.reference_type == "Stock Entry":
             qty = sum(
