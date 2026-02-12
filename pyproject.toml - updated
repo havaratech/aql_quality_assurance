@@ -1,0 +1,24 @@
+[project]
+name = "aql_quality_assurance"
+authors = [
+    { name = "HavaraTech", email = "elan.k@havaratech.com"}
+]
+version = "1.0.0"
+description = "An AQL-based Quality Assurance extension for ERPNexts Quality Inspection module, with the objective of consolidating and replacing the existing standalone quality management system."
+requires-python = ">=3.11"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    # "frappe~=15.0.0" # Installed and managed by bench.
+]
+
+[tool.bench.frappe-dependencies]
+frappe = ">=15.0.0,<17.0.0"  # Compatible with v15 & v16
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+frappe = ">=15.0.0,<17.0.0"
