@@ -97,20 +97,17 @@ class QualityInspection(ERPNextQualityInspection):
         if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:
             if ref_doc.get("supplier"):
                 party_doc = frappe.get_doc("Supplier", ref_doc.supplier)
-                doc.custom_aql_party_names = ref_doc.supplier
-                doc.custom_aql_party_types = "Supplier"
+                doc.custom_aql_party_name =  ref_doc.supplier
                 doc.custom_aql_party_type = "Supplier"
 
         elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:
             if ref_doc.get("customer"):
                 party_doc = frappe.get_doc("Customer", ref_doc.customer)
-                doc.custom_aql_party_names = ref_doc.customer
-                doc.custom_aql_party_types = "Customer"
+                doc.custom_aql_party_name = ref_doc.customer
                 doc.custom_aql_party_type = "Customer"
         elif doc.reference_type == "Stock Entry":
             # INTERNAL transaction
-            doc.custom_aql_party_names = ref_doc.company
-            doc.custom_aql_party_types = "Company"
+            doc.custom_aql_party_name = ref_doc.company
             doc.custom_aql_party_type = "Company"
             party_doc = None   # explicitly no party source        
                 
@@ -811,18 +808,18 @@ def set_aql_parameters(doc):
     if doc.reference_type in ["Purchase Receipt", "Purchase Invoice", "Subcontracting Receipt"]:
         if ref_doc.get("supplier"):
             party_doc = frappe.get_doc("Supplier", ref_doc.supplier)
-            doc.custom_aql_party_names = ref_doc.supplier
-            doc.custom_aql_party_types = "Supplier"
+            doc.custom_aql_party_name = ref_doc.supplier
+            doc.custom_aql_party_type = "Supplier"
 
     elif doc.reference_type in ["Delivery Note", "Sales Invoice"]:
         if ref_doc.get("customer"):
             party_doc = frappe.get_doc("Customer", ref_doc.customer)
-            doc.custom_aql_party_names = ref_doc.customer
-            doc.custom_aql_party_types = "Customer"
+            doc.custom_aql_party_name = ref_doc.customer
+            doc.custom_aql_party_type = "Customer"
     elif doc.reference_type == "Stock Entry":
         # INTERNAL transaction
-        doc.custom_aql_party_names = ref_doc.company
-        doc.custom_aql_party_types = "Company"
+        doc.custom_aql_party_name = ref_doc.company
+        doc.custom_aql_party_type = "Company"
         party_doc = None   # explicitly no party source        
 
     # ---------------- ITEM SOURCE ---------------------------------------------------------------------------------------------------------------------------

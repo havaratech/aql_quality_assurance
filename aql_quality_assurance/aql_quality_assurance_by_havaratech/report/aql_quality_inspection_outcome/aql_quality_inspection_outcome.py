@@ -32,7 +32,7 @@ def execute(filters=None):
             SUM(status = 'On Hold') AS on_hold
         FROM `tabQuality Inspection`
         WHERE docstatus != 2
-        AND custom_aql_party_types = 'Supplier'                   
+        AND custom_aql_party_type = 'Supplier'                   
         {conditions}
     """, params, as_dict=True)[0]
 

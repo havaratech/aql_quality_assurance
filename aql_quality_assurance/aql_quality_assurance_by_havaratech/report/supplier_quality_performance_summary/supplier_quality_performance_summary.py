@@ -10,8 +10,8 @@ def execute(filters=None):
     settings = frappe.get_single("AQL Settings")
 
     conditions = """
-        AND custom_aql_party_types = 'Supplier'
-        AND custom_aql_party_names IS NOT NULL
+        AND custom_aql_party_type = 'Supplier'
+        AND custom_aql_party_name IS NOT NULL
     """
     params = {}
 
@@ -28,16 +28,16 @@ def execute(filters=None):
     # -------------------------------------------------
     rows = frappe.db.sql(f"""
         SELECT
-            custom_aql_party_names AS supplier,
+            custom_aql_party_name AS supplier,
             COUNT(*) AS total_qi,
             SUM(status = 'Accepted') AS accepted_qi,
             SUM(status = 'Rejected') AS rejected_qi
         FROM `tabQuality Inspection`
         WHERE
             docstatus = 1
-            AND  custom_aql_party_types = 'Supplier'
+            AND  custom_aql_party_type = 'Supplier'
             {conditions}
-        GROUP BY custom_aql_party_names
+        GROUP BY custom_aql_party_name
         HAVING COUNT(*) > 0
     """, params, as_dict=True)
 

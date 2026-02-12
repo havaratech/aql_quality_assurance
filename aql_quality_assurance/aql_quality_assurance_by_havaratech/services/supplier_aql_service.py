@@ -43,8 +43,8 @@ def process_supplier_aql(supplier, start_date, end_date):
         FROM `tabQuality Inspection`
         WHERE
             docstatus = 1
-            AND custom_aql_party_types = 'Supplier'
-            AND custom_aql_party_names = %s
+            AND custom_aql_party_type = 'Supplier'
+            AND custom_aql_party_name = %s
             AND report_date BETWEEN %s AND %s
         """,
         (supplier, start_date, end_date),

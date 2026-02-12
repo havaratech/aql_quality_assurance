@@ -73,11 +73,11 @@ def run_supplier_aql_scheduler():
         # ---------------------------------------
         suppliers = frappe.db.sql(
             """
-            SELECT DISTINCT custom_aql_party_names
+            SELECT DISTINCT custom_aql_party_name
             FROM `tabQuality Inspection`
             WHERE
                 docstatus = 1
-                AND custom_aql_party_types = 'Supplier'
+                AND custom_aql_party_type = 'Supplier'
                 AND report_date BETWEEN %s AND %s
             """,
             (start_date, end_date),

@@ -32,7 +32,7 @@ def execute(filters=None):
         FROM `tabQuality Inspection`
         WHERE
             docstatus = 1
-            AND custom_aql_party_types = 'Supplier'
+            AND custom_aql_party_type = 'Supplier'
             {conditions}
         GROUP BY DATE(report_date)
         ORDER BY DATE(report_date)
