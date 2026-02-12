@@ -34,21 +34,24 @@ class QualityInspection(ERPNextQualityInspection):
         # UI / FIELD RESTRICTIONS ONLY
         self._apply_reading_field_restrictions()
         if self.readings and not frappe.flags.in_patch:
-            for row in self.readings:
+            for row in self.readings or []:
                 # IF THIS ROW ALREADY EXISTS IN DB
                 #if row.name and not row.is_new():
-                if not row.get("_doc_before_save"):
+                before = row.get("_doc_before_save")
                     # PREVENT CHANGING AQL-DEFINING FIELDS
-                    if (
-                        row.has_value_changed("specification")
-                        or row.has_value_changed("parameter_group")     
-                        or row.has_value_changed("custom_aql_classification") 
-                        or row.has_value_changed("custom_aql_item_sample_no")
-                    ):
-                        frappe.throw(
-                            _("AQL parameters cannot be modified manually. "
-                              "Change Template or Sample size to regenerate.")
-                        )
+                if not before:
+                    continue
+
+                if (
+                    row.specification != before.specification
+                    or row.parameter_group != before.parameter_group
+                    or row.custom_aql_classification != before.custom_aql_classification
+                    or row.custom_aql_item_sample_no != before.custom_aql_item_sample_no
+                ):
+                    frappe.throw(
+                        _("AQL parameters cannot be modified manually. "
+                            "Change Template or Sample size to regenerate.")
+                    )
                 # MAKE READING_1 AND READING_VALUE READ-ONLY BASED ON NUMBERIC FLAG
                     if row.numeric:
                         row.reading_1_read_only = True
