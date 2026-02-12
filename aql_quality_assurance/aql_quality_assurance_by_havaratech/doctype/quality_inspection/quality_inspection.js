@@ -3,12 +3,12 @@
 //***************************************************************//
 
 frappe.ui.form.on('Quality Inspection', {
-    refresh(frm) {
-        console.log("Readonly logic applied on refresh");
-        // Ensure rules are applied after grid renders
-        frm.fields_dict.readings.grid.refresh();
-        setTimeout(() => apply_all_aql_rules(frm), 100); // Delay to ensure grid rows are ready
-    },
+    // refresh(frm) {
+    //     console.log("Readonly logic applied on refresh");
+    //     // Ensure rules are applied after grid renders
+    //     frm.fields_dict.readings.grid.refresh();
+    //     setTimeout(() => apply_all_aql_rules(frm), 100); // Delay to ensure grid rows are ready
+    // },
     onload(frm) {
         console.log("Readonly logic applied on form load");
         setTimeout(() => apply_all_aql_rules(frm), 100); // Apply rules on form load
@@ -23,7 +23,8 @@ frappe.ui.form.on('Quality Inspection', {
     },
     refresh(frm){
         console.log("Form reloaded - applied readonly")
-        apply_all_aql_rules(frm);
+        frm.fields_dict.readings.grid.refresh();
+        setTimeout(() => apply_all_aql_rules(frm), 100); // Delay to ensure grid rows are ready
     }
 });
 
@@ -57,25 +58,37 @@ function apply_all_aql_rules(frm) {
 function apply_row_rule(frm, row) {
     const grid = frm.fields_dict.readings.grid;
     const grid_row = grid.grid_rows_by_docname[row.name];
-    console.log("Grid row:", grid_row); // Debugging log
-    if (!grid_row) {
-        console.log("Grid row not found for row:", row.name); // Debugging log
-        return;
-    }
+
+    if (!grid_row) return;
 
     const is_numeric = cint(row.numeric);
 
-    const $reading_1 = grid_row.row.find('[data-fieldname="reading_1"] input');
-    const $reading_value = grid_row.row.find('[data-fieldname="reading_value"] input');
+    // Loop reading_1 to reading_10
+    for (let i = 1; i <= 10; i++) {
+        const $reading = grid_row.row.find(
+            `[data-fieldname="reading_${i}"] input`
+        );
 
-    console.log("Selectors for reading_1 and reading_value:", $reading_1, $reading_value); // Debugging log
+        if ($reading.length) {
+            if (is_numeric) {
+                enable($reading);
+            } else {
+                disable($reading);
+            }
+        }
+    }
 
-    if (is_numeric) {
-        enable($reading_1);
-        disable($reading_value);
-    } else {
-        disable($reading_1);
-        enable($reading_value);
+    // reading_value behaves opposite
+    const $reading_value = grid_row.row.find(
+        '[data-fieldname="reading_value"] input'
+    );
+
+    if ($reading_value.length) {
+        if (is_numeric) {
+            disable($reading_value);
+        } else {
+            enable($reading_value);
+        }
     }
 }
 

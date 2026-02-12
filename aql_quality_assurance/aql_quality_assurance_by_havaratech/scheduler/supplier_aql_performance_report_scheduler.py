@@ -17,7 +17,10 @@ def _acquire_db_lock(lock_name):
 
 def _release_db_lock(lock_name):
     try:
-        frappe.db.sql("SELECT RELEASE_LOCK(%s)", (lock_name,))
+        frappe.db.sql(
+            "SELECT RELEASE_LOCK(%s)",
+            (lock_name,),
+        )
     except Exception:
         pass
 
@@ -25,6 +28,8 @@ def _release_db_lock(lock_name):
 def run_supplier_aql_scheduler():
     """
     Cron-safe Supplier AQL Scheduler
+    - Uses bucket-based AQL logic
+    - Thresholds fully driven by AQL Settings
     """
 
     if frappe.flags.in_test:
@@ -45,19 +50,14 @@ def run_supplier_aql_scheduler():
     )
 
     try:
-        config = frappe.get_single(
-            "AQL Classification Quality Inspection Setting"
-        )
+        # ---------------------------------------
+        # Load AQL Settings
+        # ---------------------------------------
+        config = frappe.get_single("AQL Settings")
 
         if not config.inspection_start_from:
             frappe.logger("aql").warning(
                 "Scheduler aborted: inspection_start_from not set"
-            )
-            return
-
-        if config.supplier_min_threshold >= config.supplier_max_threshold:
-            frappe.logger("aql").error(
-                "Invalid AQL thresholds: min >= max"
             )
             return
 
@@ -68,46 +68,60 @@ def run_supplier_aql_scheduler():
             else getdate(today())
         )
 
-        suppliers = frappe.db.sql("""
+        # ---------------------------------------
+        # Fetch Suppliers with Inspections
+        # ---------------------------------------
+        suppliers = frappe.db.sql(
+            """
             SELECT DISTINCT custom_aql_party_names
             FROM `tabQuality Inspection`
             WHERE
                 docstatus = 1
                 AND custom_aql_party_types = 'Supplier'
                 AND report_date BETWEEN %s AND %s
-        """, (start_date, end_date), as_list=True)
+            """,
+            (start_date, end_date),
+            as_list=True,
+        )
 
         frappe.logger("aql").info(
             f"Supplier AQL Scheduler found {len(suppliers)} suppliers"
         )
 
+        # ---------------------------------------
+        # Process Each Supplier
+        # ---------------------------------------
         for (supplier,) in suppliers:
             if not supplier:
                 continue
 
+            # Skip if manual override enabled
             if frappe.db.get_value(
                 "Supplier",
                 supplier,
-                "custom_aql_logic_override"
+                "custom_aql_logic_override",
             ):
+                frappe.logger("aql").info(
+                    f"Supplier {supplier} skipped (logic override enabled)"
+                )
                 continue
 
             process_supplier_aql(
                 supplier=supplier,
                 start_date=start_date,
                 end_date=end_date,
-                min_threshold=config.supplier_min_threshold,
-                max_threshold=config.supplier_max_threshold
             )
 
             frappe.db.commit()
 
-        frappe.logger("aql").info("Supplier AQL Scheduler FINISHED")
+        frappe.logger("aql").info(
+            "Supplier AQL Scheduler FINISHED successfully"
+        )
 
     except Exception:
         frappe.log_error(
             title="Supplier AQL Scheduler Failed",
-            message=frappe.get_traceback()
+            message=frappe.get_traceback(),
         )
         raise
 

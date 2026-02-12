@@ -8,19 +8,72 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["frappe", "erpnext"]
 # app_include_py = []
     
 
 fixtures = [
+    #--------------------------------------------------------------------
+    # Custom Fields
+    #--------------------------------------------------------------------    
     {
         "dt": "Custom Field",
         "filters": [
             ["fieldname", "like", "custom_aql_%"]
         ]
+    },
+    #--------------------------------------------------------------------
+    # Property Setters
+    #--------------------------------------------------------------------
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]
+    },
+    #--------------------------------------------------------------------
+    # Custom Doctypes
+    #--------------------------------------------------------------------
+    {
+        "dt": "DocType",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]
+    },
+    #--------------------------------------------------------------------
+    # Reports(Script / Query / JSON)
+    #--------------------------------------------------------------------
+    {
+        "dt": "Report",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]
+    },
+    #--------------------------------------------------------------------
+    # Dashboard Charts
+    #--------------------------------------------------------------------
+    {
+        "dt": "Dashboard",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]
+    },
+    {
+        "dt": "Dashboard Chart",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]   
+    },
+    #--------------------------------------------------------------------
+    # Number Cards    
+    #--------------------------------------------------------------------
+    {
+        "dt": "Number Card",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]
     }
 ]
-
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -175,7 +228,7 @@ override_doctype_class = {
 # }
 scheduler_events = {
     "cron": {
-        "*/20 * * * *": [
+        "*/5 * * * *": [
             "aql_quality_assurance.aql_quality_assurance_by_havaratech.scheduler.supplier_aql_performance_report_scheduler.run_supplier_aql_scheduler"
         ]
     }

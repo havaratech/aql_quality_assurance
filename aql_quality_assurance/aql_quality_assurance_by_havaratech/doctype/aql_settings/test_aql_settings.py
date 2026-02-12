@@ -13,9 +13,9 @@ IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
 
-class IntegrationTestAQLClassificationQualityInspectionSetting(IntegrationTestCase):
+class IntegrationTestAQLSettings(IntegrationTestCase):
 	"""
-	Integration tests for AQLClassificationQualityInspectionSetting.
+	Integration tests for AQLSettings.
 	Use this class for testing interactions between multiple components.
 	"""
 

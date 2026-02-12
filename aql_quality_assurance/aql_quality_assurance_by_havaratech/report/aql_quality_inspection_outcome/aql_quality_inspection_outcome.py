@@ -7,7 +7,7 @@ def execute(filters=None):
     # -------------------------------------------------
     # Read global dashboard date range (Single DocType)
     # -------------------------------------------------
-    settings = frappe.get_single("AQL Classification Quality Inspection Setting")
+    settings = frappe.get_single("AQL Settings")
 
     conditions = ""
     params = {}
@@ -32,6 +32,7 @@ def execute(filters=None):
             SUM(status = 'On Hold') AS on_hold
         FROM `tabQuality Inspection`
         WHERE docstatus != 2
+        AND custom_aql_party_types = 'Supplier'                   
         {conditions}
     """, params, as_dict=True)[0]
 

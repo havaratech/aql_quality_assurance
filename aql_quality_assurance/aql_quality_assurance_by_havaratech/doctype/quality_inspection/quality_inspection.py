@@ -86,7 +86,7 @@ class QualityInspection(ERPNextQualityInspection):
             return doc.as_dict()
 
         ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
-        aql_global = frappe.get_single("AQL Classification Quality Inspection Setting")
+        aql_global = frappe.get_single("AQL Settings")
 
         VALID_LEVELS = ['Gen I', 'Gen II', 'Gen III', 'Spl I', 'Spl II', 'Spl III', 'Spl IV']
         VALID_SCALES = ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']
@@ -169,7 +169,7 @@ class QualityInspection(ERPNextQualityInspection):
         return doc.as_dict()
 
     # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # 1️⃣ OPTIONAL PARAMETER LOGIC
+    # OPTIONAL PARAMETER LOGIC
     # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     def _apply_optional_parameter_logic(self):
         """ If optional_parameter is enabled and no reading is provided, force status = Accepted """
@@ -197,7 +197,7 @@ class QualityInspection(ERPNextQualityInspection):
     from frappe.utils import cint   
     
     # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # 2️⃣ DERIVE CUSTOM AQL STATUS
+    # DERIVE CUSTOM AQL STATUS
     # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     
     def _row_has_input(self, row):
@@ -347,7 +347,7 @@ class QualityInspection(ERPNextQualityInspection):
             self.quality_inspection_template
         )
 
-        # ✅ CORRECT child table
+        # CORRECT child table
         template_rows = template.item_quality_inspection_parameter
 
         if not template_rows:
@@ -504,11 +504,11 @@ class QualityInspection(ERPNextQualityInspection):
         if not any(role in frappe.get_roles() for role in ("System Manager", "Administrator")):
             frappe.throw("Only Administrator or System Manager can delete Quality Inspections.")     
 
-    def _is_restricted_reading_mode(self):
-        return frappe.db.get_single_value(
-            "AQL Classification Quality Inspection Setting",
-            "quality_inspection_reading_settings"
-        ) == 1
+    # def _is_restricted_reading_mode(self):
+    #     return frappe.db.get_single_value(
+    #         "AQL Settings",
+    #         "quality_inspection_reading_settings"
+    #     ) == 1
 
     def _apply_reading_field_restrictions(self):
         """
@@ -517,8 +517,8 @@ class QualityInspection(ERPNextQualityInspection):
         - Except reading_1 … reading_10 and reading_value
         """
 
-        if not self._is_restricted_reading_mode():
-            return
+        # if not self._is_restricted_reading_mode():
+        #     return
 
         allowed = {"reading_value"} | {f"reading_{i}" for i in range(1, 11)}
 
@@ -680,7 +680,7 @@ def calculate_aql_value(lot, level_code, aql_value):
         # fallback to default accept/reject = 0
         return {"sample": AQLSampleSizeByLetter.get(letter, normalized_lot), "accept": 0, "reject": 0}
     
-# 🔥 WHITELISTED FUNCTION FOR CUSTOM BUTTON
+# WHITELISTED FUNCTION FOR CUSTOM BUTTON
 @frappe.whitelist()
 def refresh_aql_logic(doc):
     """
@@ -723,10 +723,10 @@ def calculate_aql_status_counts(doc):
     if not isinstance(doc, QualityInspection):
         doc.__class__ = QualityInspection
 
-    # 1️⃣ Calculate counts
+    # Calculate counts
     doc.calculate_aql_status_counts()
 
-    # 3️⃣ Return everything
+    # Return everything
     return {
         "custom_aql_actual_critical_result": doc.custom_aql_actual_critical_result,
         "custom_aql_actual_major_result": doc.custom_aql_actual_major_result,
@@ -770,7 +770,7 @@ def run_copy_aql_classification(doc):
         doc.quality_inspection_template
     )
 
-    # ✅ CORRECT child table
+    # CORRECT child table
     template_rows = template.item_quality_inspection_parameter
 
     if not template_rows:
@@ -800,7 +800,7 @@ def set_aql_parameters(doc):
         return doc.as_dict()
 
     ref_doc = frappe.get_doc(doc.reference_type, doc.reference_name)
-    aql_global = frappe.get_single("AQL Classification Quality Inspection Setting")
+    aql_global = frappe.get_single("AQL Settings")
 
     VALID_LEVELS = ['Gen I', 'Gen II', 'Gen III', 'Spl I', 'Spl II', 'Spl III', 'Spl IV']
     VALID_SCALES = ['0.065', '0.1', '0.15', '0.25', '0.4', '0.65', '1.0', '1.5', '2.5', '4', '6.5']
@@ -879,7 +879,7 @@ def set_aql_parameters(doc):
     return doc.as_dict()
 
 # -------------------------            
-# 🔥 WHITELISTED WRAPPER (THIS IS WHAT JS CALLS)
+# WHITELISTED WRAPPER (THIS IS WHAT JS CALLS)
 # -------------------------
 @frappe.whitelist()
 def run_calculate_aql_server(name):

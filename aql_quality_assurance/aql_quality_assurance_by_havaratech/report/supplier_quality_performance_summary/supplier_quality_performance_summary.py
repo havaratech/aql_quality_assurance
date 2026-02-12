@@ -7,7 +7,7 @@ def execute(filters=None):
     # -------------------------------------------------
     # Read global dashboard date range (Single DocType)
     # -------------------------------------------------
-    settings = frappe.get_single("AQL Classification Quality Inspection Setting")
+    settings = frappe.get_single("AQL Settings")
 
     conditions = """
         AND custom_aql_party_types = 'Supplier'
@@ -35,6 +35,7 @@ def execute(filters=None):
         FROM `tabQuality Inspection`
         WHERE
             docstatus = 1
+            AND  custom_aql_party_types = 'Supplier'
             {conditions}
         GROUP BY custom_aql_party_names
         HAVING COUNT(*) > 0

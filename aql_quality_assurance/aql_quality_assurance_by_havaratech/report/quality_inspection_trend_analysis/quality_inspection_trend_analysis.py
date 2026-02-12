@@ -7,42 +7,47 @@ def execute(filters=None):
     # ---------------------------------------------
     # Read dashboard date range
     # ---------------------------------------------
-    settings = frappe.get_single("AQL Classification Quality Inspection Setting")
+    settings = frappe.get_single("AQL Settings")
 
     conditions = ""
     params = {}
 
     if settings.dashboard_from_date:
-        conditions += " AND report_date >= %(from_date)s"
+        conditions += " AND DATE(report_date) >= %(from_date)s"
         params["from_date"] = settings.dashboard_from_date
 
     if settings.dashboard_to_date:
-        conditions += " AND report_date <= %(to_date)s"
+        conditions += " AND DATE(report_date) <= %(to_date)s"
         params["to_date"] = settings.dashboard_to_date
 
     # ---------------------------------------------
-    # Month-wise aggregation
+    # DAILY aggregation (KEY CHANGE)
     # ---------------------------------------------
-    data = frappe.db.sql(f"""
+    data = frappe.db.sql(
+        f"""
         SELECT
-            CONCAT(
-                YEAR(report_date), '-',
-                LPAD(MONTH(report_date), 2, '0')
-            ) AS month,
-            AVG(status = 'Accepted') * 100 AS accepted_pct,
-            AVG(status = 'Rejected') * 100 AS rejected_pct
+            DATE(report_date) AS report_day,
+            SUM(status = 'Accepted') / COUNT(*) * 100 AS accepted_pct,
+            SUM(status = 'Rejected') / COUNT(*) * 100 AS rejected_pct
         FROM `tabQuality Inspection`
         WHERE
             docstatus = 1
+            AND custom_aql_party_types = 'Supplier'
             {conditions}
-        GROUP BY YEAR(report_date), MONTH(report_date)
-        ORDER BY YEAR(report_date), MONTH(report_date)
-    """, params, as_dict=True)
+        GROUP BY DATE(report_date)
+        ORDER BY DATE(report_date)
+        """,
+        params,
+        as_dict=True,
+    )
+
+    if not data:
+        return [], [], None, None
 
     # ---------------------------------------------
-    # Moving average (stock-style smoothing)
+    # Moving average (DAILY)
     # ---------------------------------------------
-    def moving_average(values, window=3):
+    def moving_average(values, window=5):
         result = []
         for i in range(len(values)):
             subset = values[max(0, i - window + 1): i + 1]
@@ -51,23 +56,46 @@ def execute(filters=None):
 
     accepted_vals = [round(d.accepted_pct, 2) for d in data]
     rejected_vals = [round(d.rejected_pct, 2) for d in data]
-    accepted_ma = moving_average(accepted_vals)
+    accepted_trend = moving_average(accepted_vals)
+
+    # ---------------------------------------------
+    # Inject trend back into rows
+    # ---------------------------------------------
+    for i, row in enumerate(data):
+        row["accepted_trend"] = accepted_trend[i]
 
     # ---------------------------------------------
     # Columns
     # ---------------------------------------------
     columns = [
-        {"label": "Month", "fieldname": "month", "fieldtype": "Data"},
-        {"label": "Accepted %", "fieldname": "accepted_pct", "fieldtype": "Percent"},
-        {"label": "Rejected %", "fieldname": "rejected_pct", "fieldtype": "Percent"},
+        {
+            "label": "Date",
+            "fieldname": "report_day",
+            "fieldtype": "Date",
+        },
+        {
+            "label": "Accepted %",
+            "fieldname": "accepted_pct",
+            "fieldtype": "Percent",
+        },
+        {
+            "label": "Accepted % (Trend)",
+            "fieldname": "accepted_trend",
+            "fieldtype": "Percent",
+        },
+        {
+            "label": "Rejected %",
+            "fieldname": "rejected_pct",
+            "fieldtype": "Percent",
+        },
     ]
 
     # ---------------------------------------------
-    # Stock-market style line chart
+    # Chart (TRUE DAILY TREND)
     # ---------------------------------------------
     chart = {
         "data": {
-            "labels": [d.month for d in data],
+            "labels": [str(d.report_day) for d in data],
             "datasets": [
                 {
                     "name": "Accepted %",
@@ -75,7 +103,7 @@ def execute(filters=None):
                 },
                 {
                     "name": "Accepted % (Trend)",
-                    "values": accepted_ma,
+                    "values": accepted_trend,
                 },
                 {
                     "name": "Rejected %",
@@ -85,13 +113,13 @@ def execute(filters=None):
         },
         "type": "line",
         "colors": [
-            "#2ecc71",  # Accepted – main price line
-            "#1abc9c",  # Moving average – smooth trend
-            "#e74c3c",  # Rejected – risk signal
+            "#2ecc71",  # Accepted
+            "#1abc9c",  # Trend
+            "#e74c3c",  # Rejected
         ],
         "lineOptions": {
-            "hideDots": 1,      # 🔑 no markers
-            "regionFill": 0,    # 🔑 no area fill
+            "hideDots": 1,
+            "regionFill": 0,
         },
     }
 

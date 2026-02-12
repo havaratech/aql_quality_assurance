@@ -1,0 +1,32 @@
+[
+ {
+  "cards": [
+   {
+    "card": "Total Inspections"
+   }
+  ],
+  "chart_options": null,
+  "charts": [
+   {
+    "chart": "AQL Quality Inspection Outcome",
+    "width": "Half"
+   },
+   {
+    "chart": "Quality Inspection Trend Analysis",
+    "width": "Half"
+   },
+   {
+    "chart": "Supplier Quality Performance Summary",
+    "width": "Full"
+   }
+  ],
+  "dashboard_name": "Supplier Quality Intelligence",
+  "docstatus": 0,
+  "doctype": "Dashboard",
+  "is_default": 0,
+  "is_standard": 1,
+  "modified": "2026-02-11 17:39:41.924223",
+  "module": "AQL Quality Assurance By HavaraTech",
+  "name": "Supplier Quality Intelligence"
+ }
+]
