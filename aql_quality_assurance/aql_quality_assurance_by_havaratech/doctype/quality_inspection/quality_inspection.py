@@ -36,7 +36,7 @@ class QualityInspection(ERPNextQualityInspection):
         if self.readings and not frappe.flags.in_patch:
             for row in self.readings or []:
                 # IF THIS ROW ALREADY EXISTS IN DB
-                #if row.name and not row.is_new():
+                #if row.name and not row.is_new(): -- commented for now
                 before = row.get("_doc_before_save")
                     # PREVENT CHANGING AQL-DEFINING FIELDS
                 if not before:
