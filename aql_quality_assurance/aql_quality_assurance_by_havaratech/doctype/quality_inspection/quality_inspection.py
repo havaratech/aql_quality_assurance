@@ -2,7 +2,7 @@ import frappe
 from frappe.utils import flt
 import json
 from frappe.model.document import Document
-from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection as ERPNextQualityInspection
+from erpnext.stock.doctype.quality_inspection.quality_inspection import QualityInspection as ERPNextQualityInspection, _
 from frappe.utils import cint
 
 class QualityInspection(ERPNextQualityInspection):
@@ -36,10 +36,19 @@ class QualityInspection(ERPNextQualityInspection):
         if self.readings and not frappe.flags.in_patch:
             for row in self.readings:
                 # IF THIS ROW ALREADY EXISTS IN DB
-                if row.name and not row.is_new():
+                #if row.name and not row.is_new():
+                if not row.get("_doc_before_save"):
                     # PREVENT CHANGING AQL-DEFINING FIELDS
-                    if row.has_value_changed("specification") or row.has_value_changed("parameter_group") or row.has_value_changed("custom_aql_classification") or row.has_value_changed("custom_aql_item_sample_no"):
-                        frappe.throw("AQL parameters cannot be modified manually." "Change Template or Sample size to regenerate.")
+                    if (
+                        row.has_value_changed("specification")
+                        or row.has_value_changed("parameter_group")     
+                        or row.has_value_changed("custom_aql_classification") 
+                        or row.has_value_changed("custom_aql_item_sample_no")
+                    ):
+                        frappe.throw(
+                            _("AQL parameters cannot be modified manually. "
+                              "Change Template or Sample size to regenerate.")
+                        )
                 # MAKE READING_1 AND READING_VALUE READ-ONLY BASED ON NUMBERIC FLAG
                     if row.numeric:
                         row.reading_1_read_only = True
