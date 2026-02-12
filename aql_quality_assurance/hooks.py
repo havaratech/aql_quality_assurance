@@ -52,18 +52,18 @@ fixtures = [
     #--------------------------------------------------------------------
     # Dashboard Charts
     #--------------------------------------------------------------------
-    {
-        "dt": "Dashboard",
-        "filters": [
-            ["module", "=", "AQL Quality Assurance By HavaraTech"]
-        ]
-    },
-    {
-        "dt": "Dashboard Chart",
-        "filters": [
-            ["module", "=", "AQL Quality Assurance By HavaraTech"]
-        ]   
-    },
+    # {
+    #     "dt": "Dashboard",
+    #     "filters": [
+    #         ["module", "=", "AQL Quality Assurance By HavaraTech"]
+    #     ]
+    # },
+    # {
+    #     "dt": "Dashboard Chart",
+    #     "filters": [
+    #         ["module", "=", "AQL Quality Assurance By HavaraTech"]
+    #     ]   
+    # },
     #--------------------------------------------------------------------
     # Number Cards    
     #--------------------------------------------------------------------
