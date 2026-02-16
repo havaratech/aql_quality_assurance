@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "autoname": "format:{SPR}-{aql_party_names}-{#####}-{DD}-{MM}-{YYYY}",
+ "autoname": "format:{SPR}-{aql_party_name}-{#####}-{DD}-{MM}-{YYYY}",
  "creation": "2026-02-01 14:05:29.754478",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -9,7 +9,7 @@
   "core_identity_traceability_section",
   "company",
   "column_break_zfcu",
-  "aql_party_names",
+  "aql_party_name",
   "column_break_zhdq",
   "item_code",
   "column_break_ccfx",
@@ -219,12 +219,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "aql_party_names",
-   "fieldtype": "Dynamic Link",
-   "label": "AQL Party Names",
-   "options": "reference_type"
-  },
-  {
    "fieldname": "inspection_performance_timeline_section",
    "fieldtype": "Section Break",
    "label": "Inspection Performance Timeline"
@@ -242,12 +236,18 @@
    "fieldname": "inspection_end_to",
    "fieldtype": "Date",
    "label": "Inspection End To"
+  },
+  {
+   "fieldname": "aql_party_name",
+   "fieldtype": "Dynamic Link",
+   "label": "AQL Party Name",
+   "options": "reference_type"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-02 16:32:17.724613",
+ "modified": "2026-02-16 12:00:39.512896",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "Supplier AQL Performance Report",

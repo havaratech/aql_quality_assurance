@@ -29,7 +29,7 @@ def process_supplier_aql(supplier, start_date, end_date):
     spl_2_max = settings.supplier_spl_ii_max
     spl_3_max = settings.supplier_spl_iii_max
 
-    minimum_inspections = settings.aql_batch_minimum_sample_size or 0
+    minimum_inspections = settings.aql_batch_minimum_inspection_count or 0
     # ---------------------------------------
     # Aggregate Quality Inspections
     # ---------------------------------------
@@ -111,7 +111,7 @@ def process_supplier_aql(supplier, start_date, end_date):
         "Supplier AQL Performance Report",
         filters={
             "reference_type": "Supplier",
-            "aql_party_names": supplier,
+            "aql_party_name": supplier,
             "inspection_start_from": start_date,
             "inspection_end_to": end_date,
         },
@@ -152,7 +152,7 @@ def process_supplier_aql(supplier, start_date, end_date):
             {
                 "doctype": "Supplier AQL Performance Report",
                 "reference_type": "Supplier",
-                "aql_party_names": supplier,
+                "aql_party_name": supplier,
                 "inspection_start_from": start_date,
                 "inspection_end_to": end_date,
                 **values,
@@ -236,7 +236,7 @@ def normalize_decision(previous_level, current_level):
 def get_previous_aql_snapshot(supplier):
     return frappe.db.get_value(
         "Supplier AQL Performance Report",
-        {"aql_party_names": supplier},
+        {"aql_party_name": supplier},
         ["current_aql_level", "rejection_percentage"],
         order_by="creation desc",
         as_dict=True,

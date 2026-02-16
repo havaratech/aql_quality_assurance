@@ -13,7 +13,7 @@
   "column_break_zqtd",
   "supplier_performance_setting_tab",
   "inspection_batch_size_section",
-  "aql_batch_minimum_sample_size",
+  "aql_batch_minimum_inspection_count",
   "aql_inspection_level_automation_configuration_section",
   "supplier_gen_i_max",
   "column_break_ewuz",
@@ -35,32 +35,36 @@
  ],
  "fields": [
   {
+   "default": "Gen II",
    "fieldname": "aql_inspection_level",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "AQL Inspection Level",
-   "options": "Select\nGen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III",
+   "options": "\nGen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III",
    "reqd": 1
   },
   {
+   "default": "0.065",
    "fieldname": "aql_critical_scale",
    "fieldtype": "Select",
    "label": "AQL Critical Scale",
-   "options": "Select\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
+   "options": "\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
    "reqd": 1
   },
   {
+   "default": "2.5",
    "fieldname": "aql_major_scale",
    "fieldtype": "Select",
    "label": "AQL Major Scale",
-   "options": "Select\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
+   "options": "\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
    "reqd": 1
   },
   {
+   "default": "6.5",
    "fieldname": "aql_minor_scale",
    "fieldtype": "Select",
    "label": "AQL Minor Scale",
-   "options": "Select\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
+   "options": "\n0.065\n0.10\n0.15\n0.25\n0.40\n0.65\n1.0\n1.5\n2.5\n4.0\n6.5",
    "reqd": 1
   },
   {
@@ -170,22 +174,22 @@
    "label": "Supplier Spl III Max"
   },
   {
-   "description": "This Minimum Sample Size need for Automatic Inspection Level ",
-   "fieldname": "aql_batch_minimum_sample_size",
-   "fieldtype": "Int",
-   "label": "AQL Batch Minimum Sample Size"
-  },
-  {
    "fieldname": "inspection_batch_size_section",
    "fieldtype": "Section Break",
    "label": "Inspection Batch Size"
+  },
+  {
+   "description": "This Minimum Inspection Count Size need for Automatic Inspection Level ",
+   "fieldname": "aql_batch_minimum_inspection_count",
+   "fieldtype": "Int",
+   "label": "AQL Batch Minimum Inspection Count"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-02-11 18:24:43.255370",
+ "modified": "2026-02-16 10:48:04.770702",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Settings",
