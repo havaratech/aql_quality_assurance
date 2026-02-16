@@ -52,19 +52,22 @@
    "fieldname": "reference_type",
    "fieldtype": "Select",
    "label": "Reference Type",
-   "options": "Supplier\nCustomer\nItem"
+   "options": "Supplier\nCustomer\nItem",
+   "read_only": 1
   },
   {
    "fieldname": "item_code",
    "fieldtype": "Link",
    "label": "Item Code",
-   "options": "Item"
+   "options": "Item",
+   "read_only": 1
   },
   {
    "fieldname": "company",
    "fieldtype": "Link",
    "label": "Company",
-   "options": "Company"
+   "options": "Company",
+   "read_only": 1
   },
   {
    "fieldname": "core_identity_traceability_section",
@@ -79,22 +82,26 @@
   {
    "fieldname": "total_quality_inspection",
    "fieldtype": "Int",
-   "label": "Total Quality Inspection"
+   "label": "Total Quality Inspection",
+   "read_only": 1
   },
   {
    "fieldname": "accepted_inspection",
    "fieldtype": "Int",
-   "label": "Accepted Inspection"
+   "label": "Accepted Inspection",
+   "read_only": 1
   },
   {
    "fieldname": "rejected_inspection",
    "fieldtype": "Int",
-   "label": "Rejected Inspection"
+   "label": "Rejected Inspection",
+   "read_only": 1
   },
   {
    "fieldname": "pending_inspection",
    "fieldtype": "Int",
-   "label": "Pending Inspection"
+   "label": "Pending Inspection",
+   "read_only": 1
   },
   {
    "fieldname": "derived_percentage_section",
@@ -104,12 +111,14 @@
   {
    "fieldname": "acceptance_percentage",
    "fieldtype": "Percent",
-   "label": "Acceptance Percentage"
+   "label": "Acceptance Percentage",
+   "read_only": 1
   },
   {
    "fieldname": "rejection_percentage",
    "fieldtype": "Percent",
-   "label": "Rejection Percentage"
+   "label": "Rejection Percentage",
+   "read_only": 1
   },
   {
    "fieldname": "aql_classification_control_section",
@@ -120,29 +129,34 @@
    "fieldname": "current_aql_level",
    "fieldtype": "Select",
    "label": "Current AQL Level",
-   "options": "Gen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III\nSpl IV"
+   "options": "Gen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III\nSpl IV",
+   "read_only": 1
   },
   {
    "fieldname": "previous_aql_level",
    "fieldtype": "Select",
    "label": "Previous AQL Level",
-   "options": "Gen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III\nSpl IV"
+   "options": "Gen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III\nSpl IV",
+   "read_only": 1
   },
   {
    "fieldname": "last_decision",
    "fieldtype": "Select",
    "label": "Last Decision",
-   "options": "Upgraded\nDowngraded\nNo Change"
+   "options": "Upgraded\nDowngraded\nNo Change",
+   "read_only": 1
   },
   {
    "fieldname": "last_decision_on",
    "fieldtype": "Datetime",
-   "label": "Last Decision On"
+   "label": "Last Decision On",
+   "read_only": 1
   },
   {
    "fieldname": "decision_reason",
    "fieldtype": "Small Text",
-   "label": "Decision Reason"
+   "label": "Decision Reason",
+   "read_only": 1
   },
   {
    "fieldname": "threshold_snapshot_section",
@@ -152,12 +166,14 @@
   {
    "fieldname": "reject_min_pct_used",
    "fieldtype": "Percent",
-   "label": "Reject Min Pct Used"
+   "label": "Reject Min Pct Used",
+   "read_only": 1
   },
   {
    "fieldname": "reject_max_pct_used",
    "fieldtype": "Percent",
-   "label": "Reject Max Pct Used"
+   "label": "Reject Max Pct Used",
+   "read_only": 1
   },
   {
    "fieldname": "drill_down_helper_section",
@@ -168,7 +184,8 @@
    "fieldname": "last_quality_inspection",
    "fieldtype": "Link",
    "label": "Last Quality Inspection",
-   "options": "Quality Inspection"
+   "options": "Quality Inspection",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_zfcu",
@@ -226,7 +243,8 @@
   {
    "fieldname": "inspection_start_from",
    "fieldtype": "Date",
-   "label": "Inspection Start From"
+   "label": "Inspection Start From",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_ikva",
@@ -235,19 +253,21 @@
   {
    "fieldname": "inspection_end_to",
    "fieldtype": "Date",
-   "label": "Inspection End To"
+   "label": "Inspection End To",
+   "read_only": 1
   },
   {
    "fieldname": "aql_party_name",
    "fieldtype": "Dynamic Link",
    "label": "AQL Party Name",
-   "options": "reference_type"
+   "options": "reference_type",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-02-16 12:00:39.512896",
+ "modified": "2026-02-16 14:31:32.295583",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "Supplier AQL Performance Report",
