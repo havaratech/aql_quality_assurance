@@ -12,13 +12,13 @@ AQL_ORDER = ["Gen I", "Gen II", "Gen III", "Spl I", "Spl II", "Spl III", "Spl IV
 # =================================================
 
 def process_supplier_aql(supplier, start_date, end_date):
-    """ Create or update Supplier AQL Performance Report using explicit bucket-based AQL logic. """
+    """Create or update Supplier AQL Performance Report."""
 
     start_date = getdate(start_date)
     end_date = getdate(end_date)
 
     # ---------------------------------------
-    # Load AQL Settings (Single DocType)
+    # Load AQL Settings
     # ---------------------------------------
     settings = frappe.get_single("AQL Settings")
 
@@ -30,6 +30,7 @@ def process_supplier_aql(supplier, start_date, end_date):
     spl_3_max = settings.supplier_spl_iii_max
 
     minimum_inspections = settings.aql_batch_minimum_inspection_count or 0
+
     # ---------------------------------------
     # Aggregate Quality Inspections
     # ---------------------------------------
@@ -54,8 +55,13 @@ def process_supplier_aql(supplier, start_date, end_date):
     if not result.total:
         return
 
-    acceptance_pct = (result.accepted / result.total) * 100
-    rejection_pct = (result.rejected / result.total) * 100
+    total = result.total
+    accepted = result.accepted or 0
+    rejected = result.rejected or 0
+    pending = result.pending or 0
+
+    acceptance_pct = (accepted / total) * 100
+    rejection_pct = (rejected / total) * 100
 
     # ---------------------------------------
     # Fetch Previous Snapshot
@@ -70,15 +76,26 @@ def process_supplier_aql(supplier, start_date, end_date):
         prev.rejection_percentage if prev else None
     )
 
-    # ----------------------------------------------------------------------------------------
-    # DECISION ENGINE (ULTRA-EXPLICIT) WITH MINIMUM SAMPLE SIZE CHECK
-    # ----------------------------------------------------------------------------------------
-    if result.total < minimum_inspections:
+    # ---------------------------------------
+    # MINIMUM SAMPLE SIZE CHECK
+    # ---------------------------------------
+    if total < minimum_inspections:
+
         current_level = previous_level
         raw_decision = (
-            f"Hold (Insufficient sample size: {result.total} < {minimum_inspections})"
-        ) 
+            f"Hold (Insufficient sample size: {total} < required {minimum_inspections})"
+        )
+        normalized_decision = "No Change"
+
+        frappe.logger("aql").info(
+            f"AQL HOLD → {supplier} | "
+            f"{total} inspections below minimum {minimum_inspections}"
+        )
+
     else:
+        # ---------------------------------------
+        # NORMAL DECISION ENGINE
+        # ---------------------------------------
         current_level, raw_decision = decide_aql_ultra_explicit(
             prev_level=previous_level,
             rejection_pct=rejection_pct,
@@ -89,20 +106,19 @@ def process_supplier_aql(supplier, start_date, end_date):
             spl_3_max=spl_3_max,
         )
 
-    normalized_decision = normalize_decision(
-        previous_level,
-        current_level
-    )
+        normalized_decision = normalize_decision(
+            previous_level,
+            current_level
+        )
 
-    # ---------------------------------------
-    # Update Supplier Master
-    # ---------------------------------------
-    update_supplier_master_aql_level(
-        supplier=supplier,
-        previous_level=previous_level,
-        current_level=current_level,
-        decision=normalized_decision,
-    )
+        # Update Supplier master only if level changed
+        if normalized_decision != "No Change":
+            update_supplier_master_aql_level(
+                supplier=supplier,
+                previous_level=previous_level,
+                current_level=current_level,
+                decision=normalized_decision,
+            )
 
     # ---------------------------------------
     # UPSERT Performance Report
@@ -119,10 +135,10 @@ def process_supplier_aql(supplier, start_date, end_date):
     )
 
     values = {
-        "total_quality_inspection": result.total,
-        "accepted_inspection": result.accepted,
-        "rejected_inspection": result.rejected,
-        "pending_inspection": result.pending,
+        "total_quality_inspection": total,
+        "accepted_inspection": accepted,
+        "rejected_inspection": rejected,
+        "pending_inspection": pending,
         "acceptance_percentage": acceptance_pct,
         "rejection_percentage": rejection_pct,
         "previous_aql_level": previous_level,
@@ -131,9 +147,9 @@ def process_supplier_aql(supplier, start_date, end_date):
         "last_decision_on": now(),
         "decision_reason": build_decision_reason(
             supplier=supplier,
-            total=result.total,
-            accepted=result.accepted,
-            rejected=result.rejected,
+            total=total,
+            accepted=accepted,
+            rejected=rejected,
             prev_pct=previous_rejection_pct,
             curr_pct=rejection_pct,
             decision=raw_decision,
@@ -160,8 +176,9 @@ def process_supplier_aql(supplier, start_date, end_date):
         )
         doc.insert(ignore_permissions=True)
 
+
 # =================================================
-# DECISION ENGINE (ULTRA-EXPLICIT BUCKET LOGIC)
+# DECISION ENGINE
 # =================================================
 
 def decide_aql_ultra_explicit(
@@ -173,53 +190,37 @@ def decide_aql_ultra_explicit(
     spl_2_max,
     spl_3_max,
 ):
-    """
-    Explicit bucket logic with readable ranges.
-    No Gen ↔ Spl crossover.
-    """
 
     if not prev_level:
         prev_level = "Gen II"
 
-    # =========================
-    # GEN FAMILY
-    # =========================
     if prev_level.startswith("Gen"):
 
-        # Gen I
         if rejection_pct <= gen_1_max:
             return "Gen I", "Gen I (rejection ≤ Gen I max)"
 
-        # Gen II
         if gen_1_max < rejection_pct <= gen_2_max:
             return "Gen II", "Gen II (Gen I max < rejection ≤ Gen II max)"
 
-        # Gen III
         if rejection_pct > gen_2_max:
             return "Gen III", "Gen III (rejection > Gen II max)"
 
-    # =========================
-    # SPL FAMILY
-    # =========================
     if prev_level.startswith("Spl"):
 
-        # Spl I
         if rejection_pct <= spl_1_max:
             return "Spl I", "Spl I (rejection ≤ Spl I max)"
 
-        # Spl II
         if spl_1_max < rejection_pct <= spl_2_max:
             return "Spl II", "Spl II (Spl I max < rejection ≤ Spl II max)"
 
-        # Spl III
         if spl_2_max < rejection_pct <= spl_3_max:
             return "Spl III", "Spl III (Spl II max < rejection ≤ Spl III max)"
 
-        # Spl IV
         if rejection_pct > spl_3_max:
             return "Spl IV", "Spl IV (rejection > Spl III max)"
 
     return prev_level, "No Change"
+
 
 # =================================================
 # HELPERS
@@ -252,6 +253,7 @@ def build_decision_reason(
     curr_pct,
     decision,
 ):
+
     trend = (
         "improving"
         if prev_pct is not None and curr_pct < prev_pct
