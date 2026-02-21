@@ -189,7 +189,8 @@ doctype_js = {
 # Override standard doctype classes
 
 override_doctype_class = {
-    "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection"
+    "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection",
+    "Purchase Receipt": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.PurchaseReceipt"
 
 # 	"ToDo": "custom_app.overrides.CustomToDo"
 }

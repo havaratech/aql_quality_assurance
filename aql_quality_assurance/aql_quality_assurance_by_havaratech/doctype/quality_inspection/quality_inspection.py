@@ -14,19 +14,32 @@ class QualityInspection(ERPNextQualityInspection):
         if self.status not in ("Accepted", "Rejected"):
             frappe.throw("Status should be <b>Accepted</b> or <b>Rejected</b>.", title="Invalid Status")        
         """ Prevent submission if any reading is not Accepted or Rejected """
-        invalid_rows = []
-        for row in self.readings:
-            if row.status not in ("Accepted", "Rejected"):
-                invalid_rows.append(
-                    f"Row {row.idx}: {row.specification} → Status = {row.status or 'Blank'}"
+        if cint(frappe.db.get_single_value("AQL Settings", "enable_early_rejection")) == 0:
+            invalid_rows = []
+            for row in self.readings:
+                if row.status not in ("Accepted", "Rejected"):
+                    invalid_rows.append(
+                        f"Row {row.idx}: {row.specification} → Status = {row.status or 'Blank'}"
+                    )
+            if invalid_rows:
+                frappe.throw(
+                    "Cannot submit Quality Inspection.<br><br>"
+                    "All readings must be <b>Accepted</b> or <b>Rejected</b>.<br><br>"
+                    + "<br>".join(invalid_rows),
+                    title="Invalid Reading Status"
                 )
-        if invalid_rows:
-            frappe.throw(
-                "Cannot submit Quality Inspection.<br><br>"
-                "All readings must be <b>Accepted</b> or <b>Rejected</b>.<br><br>"
-                + "<br>".join(invalid_rows),
-                title="Invalid Reading Status"
-            )
+        else:
+            has_rejected = any(row.status == "Rejected" for row in self.readings)
+            if has_rejected and self.status != "Rejected":
+                if cint(self.custom_aql_status_override) == 1:
+                    frappe.msgprint(
+                        "Warning: Manual override Status."
+                    )
+                else:    
+                    frappe.throw(
+                        "Status must be <b>Rejected</b> if any reading is Rejected.",
+                        title="Invalid Status"
+                    )        
 
     def validate(self):
         self._capture_user_hold_status()
@@ -87,7 +100,6 @@ class QualityInspection(ERPNextQualityInspection):
     # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
     #
     # ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-
     def set_aql_parameters(doc):
         # ---------------- BASIC SAFETY ----------------
         if isinstance(doc, str):
@@ -291,17 +303,22 @@ class QualityInspection(ERPNextQualityInspection):
         
         has_on_hold = False
         has_pending = False
+        has_rejected = False
 
         for row in self.readings:
             if row.status == "On Hold":
                 has_on_hold = True
             elif row.status == "Pending":
                 has_pending = True
+            elif row.status == "Rejected":
+                has_rejected = True    
 
         if has_on_hold:
             self.custom_aql_status = "On Hold"
         elif has_pending:
             self.custom_aql_status = "Pending"
+        elif has_rejected:
+            self.custom_aql_status = "Rejected"   
         else:
             self.custom_aql_status = "Accepted"        
 

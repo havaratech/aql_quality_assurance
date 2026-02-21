@@ -11,6 +11,7 @@
   "aql_major_scale",
   "aql_minor_scale",
   "column_break_zqtd",
+  "enable_early_rejection",
   "supplier_performance_setting_tab",
   "inspection_batch_size_section",
   "aql_batch_minimum_inspection_count",
@@ -183,13 +184,20 @@
    "fieldname": "aql_batch_minimum_inspection_count",
    "fieldtype": "Int",
    "label": "AQL Batch Minimum Inspection Count"
+  },
+  {
+   "default": "0",
+   "description": "Early rejection will be considered for status update even readings have On-Hold & Pending reading status",
+   "fieldname": "enable_early_rejection",
+   "fieldtype": "Check",
+   "label": "Enable Early Rejection"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-02-16 10:48:04.770702",
+ "modified": "2026-02-19 10:58:04.973052",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Settings",
