@@ -47,7 +47,9 @@ def execute(filters=None):
     # ---------------------------------------------
     # Moving average (DAILY)
     # ---------------------------------------------
-    def moving_average(values, window=5):
+    window_size = frappe.get_single("AQL Settings").average_window_size
+
+    def moving_average(values, window=window_size):
         result = []
         for i in range(len(values)):
             subset = values[max(0, i - window + 1): i + 1]

@@ -32,7 +32,9 @@
   "quality_inspection_performance_dashboard_timeline_section",
   "dashboard_from_date",
   "column_break_pfcv",
-  "dashboard_to_date"
+  "dashboard_to_date",
+  "column_break_olhu",
+  "average_window_size"
  ],
  "fields": [
   {
@@ -191,13 +193,23 @@
    "fieldname": "enable_early_rejection",
    "fieldtype": "Check",
    "label": "Enable Early Rejection"
+  },
+  {
+   "fieldname": "column_break_olhu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Value used for calculating Acceptance Trend Avg percentage",
+   "fieldname": "average_window_size",
+   "fieldtype": "Int",
+   "label": "Average Window Size"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-02-19 10:58:04.973052",
+ "modified": "2026-02-21 20:49:03.362132",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Settings",
