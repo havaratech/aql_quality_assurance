@@ -27,8 +27,23 @@ class QualityInspection(ERPNextQualityInspection):
                     "All readings must be <b>Accepted</b> or <b>Rejected</b>.<br><br>"
                     + "<br>".join(invalid_rows),
                     title="Invalid Reading Status"
-                )
+                )    
         else:
+            invalid_rows = []
+            
+            for row in self.readings:
+                if row.status not in ("Accepted", "Rejected"):
+                    invalid_rows.append(
+                        f"Row {row.idx}: {row.specification} → Status = {row.status or 'Blank'}"
+                    )
+            
+            if invalid_rows:
+                frappe.throw(
+                    "Cannot submit Quality Inspection.<br><br>"
+                    "All readings must be <b>Accepted</b> or <b>Rejected</b>.<br><br>"
+                    + "<br>".join(invalid_rows),
+                    title="Invalid Reading Status"
+                )
             has_rejected = any(row.status == "Rejected" for row in self.readings)
             if has_rejected and self.status != "Rejected":
                 if cint(self.custom_aql_status_override) == 1:
