@@ -87,6 +87,15 @@ class QualityInspection(ERPNextQualityInspection):
                     else:
                         row.reading_1_read_only = False
                         row.reading_value_read_only = True
+
+                if row.numeric:
+                    readings = [getattr(row, f"reading_{i}") for i in range(1, 11)]
+                    has_value = any(r not in (None, "", 0) for r in readings)
+                else:
+                    has_value = bool(row.reading_value)
+
+                if not has_value:
+                    row.status = "Pending"        
         # BASE AQL PARMS (NO STATUS YET)
         set_aql_parameters(self)
         # REGENERATE + CALCULATE AQL (CORE ENGINE)
