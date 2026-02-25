@@ -32,10 +32,16 @@ class QualityInspection(ERPNextQualityInspection):
             invalid_rows = []
             
             for row in self.readings:
-                if row.status not in ("Accepted", "Rejected", "Pending", "On Hold"):
-                    invalid_rows.append(
-                        f"Row {row.idx}: {row.specification} → Status = {row.status or 'Blank'}"
-                    )
+                if self.custom_aql_status_override == 1:
+                    if row.status not in ("Accepted", "Rejected"):
+                        invalid_rows.append(
+                            f"Row {row.idx}: {row.specification} -> Status = {row.status or 'Blank'}"
+                        )
+                else:
+                    if row.status not in ("Accepted", "Rejected", "Pending", "On Hold"):
+                        invalid_rows.append(
+                            f"Row {row.idx}: {row.specification} → Status = {row.status or 'Blank'}"
+                        )
             
             if invalid_rows:
                 frappe.throw(
