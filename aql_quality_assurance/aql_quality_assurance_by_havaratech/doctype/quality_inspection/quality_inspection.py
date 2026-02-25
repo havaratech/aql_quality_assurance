@@ -32,7 +32,7 @@ class QualityInspection(ERPNextQualityInspection):
             invalid_rows = []
             
             for row in self.readings:
-                if row.status not in ("Accepted", "Rejected"):
+                if row.status not in ("Accepted", "Rejected", "Pending", "On Hold"):
                     invalid_rows.append(
                         f"Row {row.idx}: {row.specification} → Status = {row.status or 'Blank'}"
                     )
