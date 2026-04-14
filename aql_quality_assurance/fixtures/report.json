@@ -1,0 +1,118 @@
+[
+ {
+  "add_total_row": 0,
+  "add_translate_data": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
+  "letter_head": null,
+  "modified": "2026-02-03 17:44:41.826650",
+  "module": "AQL Quality Assurance By HavaraTech",
+  "name": "Supplier Quality Performance Summary",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Quality Inspection",
+  "reference_report": null,
+  "report_name": "Supplier Quality Performance Summary",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "role": "Quality Manager"
+   }
+  ],
+  "timeout": 0
+ },
+ {
+  "add_total_row": 0,
+  "add_translate_data": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
+  "letter_head": null,
+  "modified": "2026-02-03 18:07:44.658840",
+  "module": "AQL Quality Assurance By HavaraTech",
+  "name": "Quality Inspection Trend Analysis",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Quality Inspection",
+  "reference_report": null,
+  "report_name": "Quality Inspection Trend Analysis",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "role": "Quality Manager"
+   }
+  ],
+  "timeout": 0
+ },
+ {
+  "add_total_row": 0,
+  "add_translate_data": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
+  "letter_head": null,
+  "modified": "2026-02-03 17:36:24.340972",
+  "module": "AQL Quality Assurance By HavaraTech",
+  "name": "AQL Quality Inspection Outcome",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Quality Inspection",
+  "reference_report": null,
+  "report_name": "AQL Quality Inspection Outcome",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "role": "Quality Manager"
+   }
+  ],
+  "timeout": 0
+ },
+ {
+  "add_total_row": 0,
+  "add_translate_data": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
+  "letter_head": null,
+  "modified": "2026-03-23 12:35:53.060261",
+  "module": "AQL Quality Assurance By HavaraTech",
+  "name": "AQL Process Capability Report",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Quality Inspection",
+  "reference_report": null,
+  "report_name": "AQL Process Capability Report",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "role": "Quality Manager"
+   }
+  ],
+  "timeout": 0
+ }
+]

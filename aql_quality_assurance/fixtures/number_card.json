@@ -1,0 +1,30 @@
+[
+ {
+  "aggregate_function_based_on": "",
+  "background_color": "",
+  "color": null,
+  "currency": "",
+  "docstatus": 0,
+  "doctype": "Number Card",
+  "document_type": "Quality Inspection",
+  "dynamic_filters_json": "{}",
+  "filters_config": null,
+  "filters_json": "{}",
+  "function": "Count",
+  "is_public": 1,
+  "is_standard": 1,
+  "label": "AQL Total Inspections",
+  "method": null,
+  "modified": "2026-02-03 18:34:06.820310",
+  "module": "AQL Quality Assurance By HavaraTech",
+  "name": "Total Inspections",
+  "parent_document_type": "",
+  "report_field": "total",
+  "report_function": "Sum",
+  "report_name": "AQL Quality Inspection Outcome",
+  "show_full_number": 0,
+  "show_percentage_stats": 1,
+  "stats_time_interval": "Daily",
+  "type": "Report"
+ }
+]

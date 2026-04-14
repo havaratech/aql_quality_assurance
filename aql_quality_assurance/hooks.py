@@ -8,7 +8,63 @@ app_license = "mit"
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["frappe", "erpnext"]
+# app_include_py = []
+    
+
+fixtures = [
+    #--------------------------------------------------------------------
+    # Custom Fields
+    #--------------------------------------------------------------------    
+    {
+        "dt": "Custom Field",
+        "filters": [
+            ["fieldname", "like", "custom_aql_%"]
+        ]
+    },
+    #--------------------------------------------------------------------
+    # Property Setters
+    #--------------------------------------------------------------------
+    {
+        "dt": "Property Setter",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]
+    },
+    #--------------------------------------------------------------------
+    # Reports(Script / Query / JSON)
+    #--------------------------------------------------------------------
+    {
+        "dt": "Report",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]
+    },
+    #--------------------------------------------------------------------
+    # Dashboard Charts
+    #--------------------------------------------------------------------
+    # {
+    #     "dt": "Dashboard",
+    #     "filters": [
+    #         ["module", "=", "AQL Quality Assurance By HavaraTech"]
+    #     ]
+    # },
+    # {
+    #     "dt": "Dashboard Chart",
+    #     "filters": [
+    #         ["module", "=", "AQL Quality Assurance By HavaraTech"]
+    #     ]   
+    # },
+    #--------------------------------------------------------------------
+    # Number Cards    
+    #--------------------------------------------------------------------
+    {
+        "dt": "Number Card",
+        "filters": [
+            ["module", "=", "AQL Quality Assurance By HavaraTech"]
+        ]
+    }
+]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -44,6 +100,9 @@ app_license = "mit"
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+    "Quality Inspection": "public/js/quality_inspection.js"
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -129,9 +188,12 @@ app_license = "mit"
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
+override_doctype_class = {
+    "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection",
+    "Purchase Receipt": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.PurchaseReceipt"
+
 # 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+}
 
 # Document Events
 # ---------------
@@ -144,6 +206,27 @@ app_license = "mit"
 # 		"on_trash": "method"
 # 	}
 # }
+
+# doc_events = {
+#     "Supplier": {
+#         "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.supplier.supplier.set_aql_defaults_from_config"
+#     },
+#     "Item": {
+#         "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.item.item.set_aql_defaults_from_config"
+#     },
+#     "Customer": {
+#         "validate": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.customer.customer.set_aql_defaults_from_config"
+#     }
+# }
+scheduler_events = {
+    "cron": {
+        "*/5 * * * *": [
+            "aql_quality_assurance.aql_quality_assurance_by_havaratech.scheduler.supplier_aql_performance_report_scheduler.run_supplier_aql_scheduler"
+        ]
+    }
+}
+
+
 
 # Scheduled Tasks
 # ---------------
