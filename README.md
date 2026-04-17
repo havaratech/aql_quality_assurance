@@ -1,3 +1,7 @@
+<div align="left">
+  <img src="aql_quality_assurance/public/havara_AQL_app(png).png" width="150">
+</div>
+
 # AQL Quality Assurance by HavaraTech
 AQL Quality Assurance is an ERPNext app that automates lot-based quality inspections using international AQL (Acceptance Quality Limit) standards and integrates them directly into ERPNext’s operational workflows.
 
