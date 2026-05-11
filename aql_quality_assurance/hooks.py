@@ -101,7 +101,7 @@ fixtures = [
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_js = {
-    "Quality Inspection": "public/js/quality_inspection.js"
+    "Quality Inspection": "aql_quality_assurance_by_havaratech/doctype/quality_inspection/quality_inspection.js"
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -186,9 +186,9 @@ doctype_js = {
 
 # DocType Class
 # ---------------
-# Override standard doctype classes
+# Extend standard doctype classes instead of overriding them
 
-override_doctype_class = {
+extend_doctype_class = {
     "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection",
     "Purchase Receipt": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.PurchaseReceipt"
 

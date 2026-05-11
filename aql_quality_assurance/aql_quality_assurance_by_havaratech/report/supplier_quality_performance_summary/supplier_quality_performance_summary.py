@@ -9,24 +9,7 @@ def execute(filters=None):
     # -------------------------------------------------
     settings = frappe.get_single("AQL Settings")
 
-    conditions = """
-        AND custom_aql_party_type = 'Supplier'
-        AND custom_aql_party_name IS NOT NULL
-    """
-    params = {}
-
-    if settings.dashboard_from_date:
-        conditions += " AND report_date >= %(from_date)s"
-        params["from_date"] = settings.dashboard_from_date
-
-    if settings.dashboard_to_date:
-        conditions += " AND report_date <= %(to_date)s"
-        params["to_date"] = settings.dashboard_to_date
-
-    # -------------------------------------------------
-    # Supplier-wise aggregation
-    # -------------------------------------------------
-    rows = frappe.db.sql(f"""
+    sql = """
         SELECT
             custom_aql_party_name AS supplier,
             COUNT(*) AS total_qi,
@@ -35,11 +18,22 @@ def execute(filters=None):
         FROM `tabQuality Inspection`
         WHERE
             docstatus = 1
-            AND  custom_aql_party_type = 'Supplier'
-            {conditions}
-        GROUP BY custom_aql_party_name
-        HAVING COUNT(*) > 0
-    """, params, as_dict=True)
+            AND custom_aql_party_type = 'Supplier'
+            AND custom_aql_party_name IS NOT NULL
+    """
+    params = {}
+
+    if settings.dashboard_from_date:
+        sql += " AND report_date >= %(from_date)s"
+        params["from_date"] = settings.dashboard_from_date
+
+    if settings.dashboard_to_date:
+        sql += " AND report_date <= %(to_date)s"
+        params["to_date"] = settings.dashboard_to_date
+
+    sql += " GROUP BY custom_aql_party_name HAVING COUNT(*) > 0"
+
+    rows = frappe.db.sql(sql, params, as_dict=True)
 
     data = []
     for r in rows:
