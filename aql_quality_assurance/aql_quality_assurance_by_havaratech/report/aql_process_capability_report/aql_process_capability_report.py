@@ -136,7 +136,7 @@ def get_filtered_rows(filters, extra_conditions=None, extra_values=None):
         conditions.extend(extra_conditions)
     if extra_values:
         values.update(extra_values)
-
+    # Frappe Review fix - 12-05-2026
     sql = """
         SELECT
             r.specification AS parameter,
@@ -294,7 +294,7 @@ def get_histogram_data(filters=None):
         **stats,
     }
 
-
+# Frappe Review - 12-05-2026
 @frappe.whitelist()
 def get_filter_options(fieldname, txt=None):
     txt = txt or ""

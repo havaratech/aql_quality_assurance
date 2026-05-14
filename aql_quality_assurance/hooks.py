@@ -7,8 +7,8 @@ app_license = "mit"
 
 # Apps
 # ------------------
-
-required_apps = ["frappe", "erpnext"]
+# Frappe Review fix - 12-05-2026
+required_apps = ["erpnext"]
 # app_include_py = []
     
 
@@ -100,6 +100,7 @@ fixtures = [
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
+# Frappe Review fix - 12-05-2026
 doctype_js = {
     "Quality Inspection": "aql_quality_assurance_by_havaratech/doctype/quality_inspection/quality_inspection.js"
 }
@@ -188,6 +189,7 @@ doctype_js = {
 # ---------------
 # Extend standard doctype classes instead of overriding them
 
+# Frappe Review fix - 12-05-2026
 extend_doctype_class = {
     "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection",
     "Purchase Receipt": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.PurchaseReceipt"

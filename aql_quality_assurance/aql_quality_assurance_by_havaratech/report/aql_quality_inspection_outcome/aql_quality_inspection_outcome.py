@@ -8,7 +8,7 @@ def execute(filters=None):
     # Read global dashboard date range (Single DocType)
     # -------------------------------------------------
     settings = frappe.get_single("AQL Settings")
-
+# Frappe Review fix - 12-05-2026
     sql = """
         SELECT
             COUNT(*) AS total,

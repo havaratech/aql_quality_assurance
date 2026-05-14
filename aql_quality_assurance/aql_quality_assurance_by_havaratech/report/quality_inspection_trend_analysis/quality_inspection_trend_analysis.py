@@ -8,7 +8,7 @@ def execute(filters=None):
     # Read dashboard date range
     # ---------------------------------------------
     settings = frappe.get_single("AQL Settings")
-
+# Frappe Review fix - 12-05-2026
     sql = """
         SELECT
             DATE(report_date) AS report_day,
