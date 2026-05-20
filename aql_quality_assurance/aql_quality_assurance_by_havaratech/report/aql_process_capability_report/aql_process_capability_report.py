@@ -305,7 +305,7 @@ def get_filter_options(fieldname, txt=None):
             FROM `tabQuality Inspection Reading`
             JOIN `tabQuality Inspection` qi ON qi.name = `tabQuality Inspection Reading`.parent
             WHERE IFNULL(specification, '') != ''
-              AND IFNULL(numeric, 0) = 1
+              AND IFNULL(`numeric`, 0) = 1
               AND qi.docstatus = 1
               AND specification LIKE %(txt)s
             ORDER BY specification
