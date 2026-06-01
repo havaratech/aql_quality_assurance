@@ -1,1 +1,0 @@
-../../aql_quality_assurance_by_havaratech/doctype/quality_inspection/quality_inspection.js
