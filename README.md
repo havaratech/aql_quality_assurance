@@ -28,6 +28,22 @@ Can block or warn on transaction submission when inspections fail, with optional
 
 ### Reusable Parameter Templates
 Templates define parameters, ranges, defect category, and mandatory/optional flags, and are linked to items for automatic selection.
+<br/><br/>
+
+<table>
+  <tr>
+    <td><img src="aql_quality_assurance/public/AQL_Home.png" width="500"></td>
+  </tr>
+  <tr>
+    <td><img src="aql_quality_assurance/public/AQL_Setting_1.png" width="500"></td>
+    <td><img src="aql_quality_assurance/public/AQL_Setting_2.png" width="500"></td>
+  </tr>
+  <tr>
+    <td><img src="aql_quality_assurance/public/AQL_Quality_Inspection.png" width="500"></td>  
+    <td><img src="aql_quality_assurance/public/QL Process Capability Result.png" width="500"></td>  
+  </tr>
+</table>
+<br/>
 
 ## Process Flow
 #### 1. Master Data Setup
