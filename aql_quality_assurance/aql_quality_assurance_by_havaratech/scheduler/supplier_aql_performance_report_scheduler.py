@@ -112,7 +112,7 @@ def run_supplier_aql_scheduler():
                 end_date=end_date,
             )
 
-            frappe.db.commit()
+            #frappe.db.commit()
 
         frappe.logger("aql").info(
             "Supplier AQL Scheduler FINISHED successfully"
