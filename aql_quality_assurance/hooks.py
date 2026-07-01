@@ -189,8 +189,8 @@ doctype_js = {
 # ---------------
 # Extend standard doctype classes instead of overriding them
 
-# Frappe Review fix - 12-05-2026
-extend_doctype_class = {
+# Frappe Review fix - 12-05-2026 -- extend_doctype_class
+override_doctype_class = {
     "Quality Inspection": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.quality_inspection.quality_inspection.QualityInspection",
     "Purchase Receipt": "aql_quality_assurance.aql_quality_assurance_by_havaratech.doctype.purchase_receipt.purchase_receipt.PurchaseReceipt"
 
