@@ -1,0 +1,253 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"aYYco3Q1I7\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">AQL Quality Assurance</span>\",\"col\":12}},{\"id\":\"rYZ8L7iRtm\",\"type\":\"paragraph\",\"data\":{\"text\":\"An AQL-based Quality Assurance extension for ERPNext\u2019s Quality Inspection module, the objective of AQL&nbsp;Quality Inspection to support statistically valid sampling, defect classification (Critical/Major/Minor), and automated pass/fail lot disposition for incoming materials, in\u2011process operations, internal stock movements, and outgoing shipments.\",\"col\":12}},{\"id\":\"SIojHhA55C\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Draft Quality Inspection\",\"col\":3}},{\"id\":\"YjkTzSgbNv\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Quality Inspection Pending\",\"col\":3}},{\"id\":\"P_kwoFbeqa\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"QmLiWRi3ux\",\"type\":\"card\",\"data\":{\"card_name\":\"Inspection Setup\",\"col\":4}},{\"id\":\"t2riX2YocC\",\"type\":\"card\",\"data\":{\"card_name\":\"Master\",\"col\":4}},{\"id\":\"OxjfHqPsSm\",\"type\":\"card\",\"data\":{\"card_name\":\"Transaction\",\"col\":4}},{\"id\":\"-ABI7gPS7f\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}}]",
+ "creation": "2026-09-07 10:20:20.345383",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "quality-3",
+ "idx": 0,
+ "indicator_color": "blue",
+ "is_hidden": 0,
+ "label": "AQL Quality",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Inspection Setup",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "AQL Settings",
+   "link_count": 0,
+   "link_to": "AQL Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Quality Inspection Parameter",
+   "link_count": 0,
+   "link_to": "Quality Inspection Parameter",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Quality Inspection Parameter Group",
+   "link_count": 0,
+   "link_to": "Quality Inspection Parameter Group",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Quality Inspection Template",
+   "link_count": 0,
+   "link_to": "Quality Inspection Template",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "AQL Quality Inspection Outcome",
+   "link_count": 0,
+   "link_to": "AQL Quality Inspection Outcome",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "AQL Process Capability Result",
+   "link_count": 0,
+   "link_to": "AQL Process Capability Result",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "AQL Process Capability Report",
+   "link_count": 0,
+   "link_to": "AQL Process Capability Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Quality Inspection Trend Analysis",
+   "link_count": 0,
+   "link_to": "Quality Inspection Trend Analysis",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Quality Inspection Summary",
+   "link_count": 0,
+   "link_to": "Quality Inspection Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Supplier Quality Performance Summary",
+   "link_count": 0,
+   "link_to": "Supplier Quality Performance Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Master",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Item",
+   "link_count": 0,
+   "link_to": "Item",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Supplier",
+   "link_count": 0,
+   "link_to": "Supplier",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Customer",
+   "link_count": 0,
+   "link_to": "Customer",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Transaction",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Receipt",
+   "link_count": 0,
+   "link_to": "Purchase Receipt",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Purchase Invoice",
+   "link_count": 0,
+   "link_to": "Purchase Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Stock Entry",
+   "link_count": 0,
+   "link_to": "Stock Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Delivery Note",
+   "link_count": 0,
+   "link_to": "Delivery Note",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-07 10:48:21.232555",
+ "modified_by": "Administrator",
+ "module": "AQL Quality Assurance By HavaraTech",
+ "name": "AQL Quality",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Quality",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 28.0,
+ "shortcuts": [
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Draft Quality Inspection",
+   "link_to": "Quality Inspection",
+   "stats_filter": "[[\"Quality Inspection\",\"docstatus\",\"=\",\"0\",false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Quality Inspection Pending",
+   "link_to": "Quality Inspection",
+   "stats_filter": "[[\"Quality Inspection\",\"status\",\"=\",\"Pending\",false]]",
+   "type": "DocType"
+  }
+ ],
+ "title": "AQL Quality"
+}
