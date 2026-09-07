@@ -23,6 +23,9 @@
   "report_type": "Script Report",
   "roles": [
    {
+    "parent": "Supplier Quality Performance Summary",
+    "parentfield": "roles",
+    "parenttype": "Report",
     "role": "Quality Manager"
    }
   ],
@@ -52,35 +55,9 @@
   "report_type": "Script Report",
   "roles": [
    {
-    "role": "Quality Manager"
-   }
-  ],
-  "timeout": 0
- },
- {
-  "add_total_row": 0,
-  "add_translate_data": 0,
-  "columns": [],
-  "disabled": 0,
-  "docstatus": 0,
-  "doctype": "Report",
-  "filters": [],
-  "is_standard": "Yes",
-  "javascript": null,
-  "json": null,
-  "letter_head": null,
-  "modified": "2026-02-03 17:36:24.340972",
-  "module": "AQL Quality Assurance By HavaraTech",
-  "name": "AQL Quality Inspection Outcome",
-  "prepared_report": 0,
-  "query": null,
-  "ref_doctype": "Quality Inspection",
-  "reference_report": null,
-  "report_name": "AQL Quality Inspection Outcome",
-  "report_script": null,
-  "report_type": "Script Report",
-  "roles": [
-   {
+    "parent": "Quality Inspection Trend Analysis",
+    "parentfield": "roles",
+    "parenttype": "Report",
     "role": "Quality Manager"
    }
   ],
@@ -110,6 +87,9 @@
   "report_type": "Script Report",
   "roles": [
    {
+    "parent": "AQL Process Capability Report",
+    "parentfield": "roles",
+    "parenttype": "Report",
     "role": "Quality Manager"
    }
   ],
@@ -127,7 +107,7 @@
   "javascript": null,
   "json": null,
   "letter_head": null,
-  "modified": "2026-03-31 00:00:00.000000",
+  "modified": "2026-03-31 00:00:00",
   "module": "AQL Quality Assurance By HavaraTech",
   "name": "AQL Process Capability Result",
   "prepared_report": 0,
@@ -139,6 +119,41 @@
   "report_type": "Script Report",
   "roles": [
    {
+    "parent": "AQL Process Capability Result",
+    "parentfield": "roles",
+    "parenttype": "Report",
+    "role": "Quality Manager"
+   }
+  ],
+  "timeout": 0
+ },
+ {
+  "add_total_row": 0,
+  "add_translate_data": 0,
+  "columns": [],
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Report",
+  "filters": [],
+  "is_standard": "Yes",
+  "javascript": null,
+  "json": null,
+  "letter_head": null,
+  "modified": "2026-02-03 17:36:24.340972",
+  "module": "AQL Quality Assurance By HavaraTech",
+  "name": "AQL Quality Inspection Outcome",
+  "prepared_report": 0,
+  "query": null,
+  "ref_doctype": "Quality Inspection",
+  "reference_report": null,
+  "report_name": "AQL Quality Inspection Outcome",
+  "report_script": null,
+  "report_type": "Script Report",
+  "roles": [
+   {
+    "parent": "AQL Quality Inspection Outcome",
+    "parentfield": "roles",
+    "parenttype": "Report",
     "role": "Quality Manager"
    }
   ],
