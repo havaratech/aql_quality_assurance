@@ -15,6 +15,10 @@
   "supplier_performance_setting_tab",
   "inspection_batch_size_section",
   "aql_batch_minimum_inspection_count",
+  "inspection_performance_batch_timeline_section",
+  "inspection_start_from",
+  "column_break_zyhz",
+  "inspection_end_to",
   "aql_inspection_level_automation_configuration_section",
   "supplier_gen_i_max",
   "column_break_ewuz",
@@ -25,10 +29,6 @@
   "supplier_spl_ii_max",
   "column_break_vnfj",
   "supplier_spl_iii_max",
-  "inspection_performance_batch_timeline_section",
-  "inspection_start_from",
-  "column_break_zyhz",
-  "inspection_end_to",
   "quality_inspection_performance_dashboard_timeline_section",
   "dashboard_from_date",
   "column_break_pfcv",
@@ -82,7 +82,7 @@
   {
    "fieldname": "aql_inspection_level_automation_configuration_section",
    "fieldtype": "Section Break",
-   "label": "AQL Inspection Level Automation Gen I to Gen III"
+   "label": "Automation Threshold for Gen I to Gen III"
   },
   {
    "fieldname": "column_break_ewuz",
@@ -105,12 +105,13 @@
   {
    "fieldname": "supplier_performance_setting_tab",
    "fieldtype": "Tab Break",
-   "label": "Supplier Performance Setting"
+   "label": "Supplier Inspection Level Automation"
   },
   {
    "description": "Date setting for Dashboard Visualization",
    "fieldname": "quality_inspection_performance_dashboard_timeline_section",
    "fieldtype": "Section Break",
+   "hidden": 1,
    "label": "Quality Inspection Performance Dashboard Timeline"
   },
   {
@@ -128,33 +129,33 @@
    "label": "Dashboard To Date"
   },
   {
-   "description": "Date settings for Batch Execution for Auto Inspection leveling.",
+   "description": "Date Range settings for Inspection History.",
    "fieldname": "inspection_performance_batch_timeline_section",
    "fieldtype": "Section Break",
-   "label": "Inspection Performance Batch Timeline"
+   "label": "Inspection History Timeline for Automation"
   },
   {
    "description": "Supplier's Maximus Threshold (if more, downgrade to Gen II) increased sample size",
    "fieldname": "supplier_gen_i_max",
    "fieldtype": "Float",
-   "label": "Supplier Gen I Max"
+   "label": "Gen I Max Failed Inspection Threshold"
   },
   {
    "description": "Supplier's Maximus Threshold (if more, downgrade to Gen III) increased sample size",
    "fieldname": "supplier_gen_ii_max",
    "fieldtype": "Float",
-   "label": "Supplier Gen II Max"
+   "label": "Gen II Max Failed Inspection Threshold"
   },
   {
    "fieldname": "aql_inspection_level_automation_spl_i_to_spl_iv_section",
    "fieldtype": "Section Break",
-   "label": "AQL Inspection Level Automation Spl I to Spl IV"
+   "label": "Automation Threshold for Spl I to Spl IV"
   },
   {
    "description": "Supplier's Maximus Threshold (if more, downgrade to Spl II) increased sample size",
    "fieldname": "supplier_spl_i_max",
    "fieldtype": "Float",
-   "label": "Supplier Spl I Max"
+   "label": "Spl I Max Failed Inspection Threshold"
   },
   {
    "fieldname": "column_break_strm",
@@ -164,7 +165,7 @@
    "description": "Supplier's Maximus Threshold (if more, downgrade to Spl III) increased sample size",
    "fieldname": "supplier_spl_ii_max",
    "fieldtype": "Float",
-   "label": "Supplier Spl II Max"
+   "label": "Spl II Max Failed Inspection Threshold"
   },
   {
    "fieldname": "column_break_vnfj",
@@ -174,25 +175,24 @@
    "description": "Supplier's Maximus Threshold (if more, downgrade to Spl III) increased sample size",
    "fieldname": "supplier_spl_iii_max",
    "fieldtype": "Float",
-   "label": "Supplier Spl III Max"
+   "label": "Spl III Max Failed Inspection Threshold"
   },
   {
    "fieldname": "inspection_batch_size_section",
-   "fieldtype": "Section Break",
-   "label": "Inspection Batch Size"
+   "fieldtype": "Section Break"
   },
   {
    "description": "This Minimum Inspection Count Size need for Automatic Inspection Level ",
    "fieldname": "aql_batch_minimum_inspection_count",
    "fieldtype": "Int",
-   "label": "AQL Batch Minimum Inspection Count"
+   "label": "Inspection Count Required for Automation"
   },
   {
    "default": "0",
-   "description": "Early rejection will be considered for status update even readings have On-Hold & Pending reading status",
+   "description": "Status become Rejected as soon the threshold reaches the acceptable quality limits even without completing all the parameters.  ",
    "fieldname": "enable_early_rejection",
    "fieldtype": "Check",
-   "label": "Enable Early Rejection"
+   "label": "Enable Early Rejection on Quality Inspection"
   },
   {
    "fieldname": "column_break_olhu",
@@ -209,7 +209,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-08 11:02:42.307372",
+ "modified": "2026-09-08 11:34:14.883898",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Settings",
