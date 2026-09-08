@@ -43,7 +43,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "AQL Inspection Level",
-   "options": "\nGen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III",
+   "options": "\nGen I\nGen II\nGen III\nSpl I\nSpl II\nSpl III\nSpl IV",
    "reqd": 1
   },
   {
@@ -209,7 +209,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-02-21 20:49:03.362132",
+ "modified": "2026-09-08 11:02:42.307372",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Settings",
