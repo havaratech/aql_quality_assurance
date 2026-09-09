@@ -138,13 +138,13 @@
    "description": "Supplier's Maximus Threshold (if more, downgrade to Gen II) increased sample size",
    "fieldname": "supplier_gen_i_max",
    "fieldtype": "Float",
-   "label": "Gen I Max Failed Inspection Threshold"
+   "label": "Maximum Inspection Rejected Threshold for Gen I"
   },
   {
    "description": "Supplier's Maximus Threshold (if more, downgrade to Gen III) increased sample size",
    "fieldname": "supplier_gen_ii_max",
    "fieldtype": "Float",
-   "label": "Gen II Max Failed Inspection Threshold"
+   "label": "Maximum Inspection Rejected Threshold for Gen II"
   },
   {
    "fieldname": "aql_inspection_level_automation_spl_i_to_spl_iv_section",
@@ -155,7 +155,7 @@
    "description": "Supplier's Maximus Threshold (if more, downgrade to Spl II) increased sample size",
    "fieldname": "supplier_spl_i_max",
    "fieldtype": "Float",
-   "label": "Spl I Max Failed Inspection Threshold"
+   "label": "Maximum Inspection Rejected Threshold for Spl I"
   },
   {
    "fieldname": "column_break_strm",
@@ -165,7 +165,7 @@
    "description": "Supplier's Maximus Threshold (if more, downgrade to Spl III) increased sample size",
    "fieldname": "supplier_spl_ii_max",
    "fieldtype": "Float",
-   "label": "Spl II Max Failed Inspection Threshold"
+   "label": "Maximum Inspection Rejected Threshold for Spl II"
   },
   {
    "fieldname": "column_break_vnfj",
@@ -175,7 +175,7 @@
    "description": "Supplier's Maximus Threshold (if more, downgrade to Spl III) increased sample size",
    "fieldname": "supplier_spl_iii_max",
    "fieldtype": "Float",
-   "label": "Spl III Max Failed Inspection Threshold"
+   "label": "Maximum Inspection Rejected Threshold for Spl III"
   },
   {
    "fieldname": "inspection_batch_size_section",
@@ -209,7 +209,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-09-08 11:34:14.883898",
+ "modified": "2026-09-09 12:55:58.582043",
  "modified_by": "Administrator",
  "module": "AQL Quality Assurance By HavaraTech",
  "name": "AQL Settings",
